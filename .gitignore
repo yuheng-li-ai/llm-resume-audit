@@ -1,0 +1,65 @@
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+*.egg
+build/
+dist/
+pip-wheel-metadata/
+
+# --- Tooling caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+
+# --- Project data (regenerable; may contain résumé content) ---
+data/raw/
+data/processed/
+data/audit/
+*.parquet
+*.feather
+
+# --- Project outputs (regenerable; final figures inline into proposal) ---
+outputs/figures/
+outputs/tables/
+
+# --- LaTeX byproducts ---
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# --- Virtual environments ---
+venv/
+.venv/
+env/
+.conda/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
