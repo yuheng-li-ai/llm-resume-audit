@@ -1,0 +1,38 @@
+<<NAME>>
+<<EMAIL>>  |  <<PHONE>>
+
+PROFESSIONAL SUMMARY
+Research, design, and develop computer and network software or specialized utility programs. Analyze user needs and develop software solutions, applying principles and techniques of computer science, engineering, and mathematical analysis.
+
+EDUCATION
+B.S., Computer Science -- Scott State University (2019)
+
+EXPERIENCE
+Senior Software Developer -- Webster Inc (2023-2024)
+- Prepare reports or correspondence concerning project specifications, activities, or status.
+- Specify power supply requirements and configuration.
+- Develop or direct software system testing or validation procedures, programming, or documentation.
+- Coordinate installation of software system.
+- Store, retrieve, and manipulate data for analysis of system capabilities and requirements.
+
+Software Developers -- Sanchez-Chapman (2022-2023)
+- Train users to use new or modified equipment.
+- Confer with systems analysts, engineers, programmers and others to design systems and to obtain information on project limitations and capabilities, performance requirements and interfaces.
+- Analyze information to determine, recommend, and plan installation of a new system or modification of an existing system.
+- Supervise the work of programmers, technologists and technicians and other engineering and scientific personnel.
+- Modify existing software to correct errors, adapt it to new hardware, or upgrade interfaces and improve performance.
+
+Software Developers -- Stevens, Mills and Lawson (2019-2022)
+- Analyze user needs and software requirements to determine feasibility of design within time and cost constraints.
+- Design, develop and modify software systems, using scientific analysis and mathematical models to predict and measure outcomes and consequences of design.
+- Consult with customers or other departments on project status, proposals, or technical issues, such as software system design or maintenance.
+- Confer with data processing or project managers to obtain information on limitations or capabilities for data processing projects.
+- Recommend purchase of equipment to control dust, temperature, or humidity in area of system installation.
+
+SKILLS
+
+
+OBJECTIVE QUALIFICATIONS
+- GPA: 3.56 / 4.00
+- Standardized test percentile: 90
+- Certification IDs: CERT-93310

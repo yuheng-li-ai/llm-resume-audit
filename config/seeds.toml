@@ -1,0 +1,25 @@
+# Master seed registry for the llm-resume-audit project.
+#
+# Per CHECKLIST rule 7: every random draw uses a seed pulled from this file.
+# No bare random.choice / np.random.randint anywhere in src/llm_audit/.
+#
+# Convention: integer seeds; YYYYMMDDxxx encodes the date the seed was first
+# locked plus a 3-digit per-module offset.
+
+[seeds.resume_factory]
+master       = 20260428000   # base RNG for ResumeFactory
+faker        = 20260428001   # Faker locale + per-instance seed
+task_sample  = 20260428002   # selecting O*NET tasks per résumé
+education    = 20260428003   # education tier draws
+experience   = 20260428004   # years-of-experience bracket within T_p
+
+[seeds.name_corpus]
+master       = 20260428100   # name selection RNG (Phase 2)
+
+[seeds.treatment_injector]
+master       = 20260428200   # factorial enumeration order (Phase 4)
+subsample    = 20260428201   # ~8,000-cell stratified subsample draw
+
+[seeds.batch_runner]
+master       = 20260428300   # provider call ordering (Phase 5)
+calibration  = 20260428301   # calibration-résumé injection schedule

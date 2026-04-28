@@ -7,35 +7,21 @@ Acceptance criterion for the locked 3 x 3 x 2 occupation panel
 
 from __future__ import annotations
 
-import tomllib
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from llm_audit.onet_loader import OnetLoader
+from llm_audit.utils.io import OccupationsConfig
 
 _REPO_ROOT = Path(__file__).resolve().parents[1]
 _CONFIG_PATH = _REPO_ROOT / "config" / "occupations.toml"
 _ONET_DIR = _REPO_ROOT / "data" / "raw" / "onet" / "db_28_1_text"
 
 
-class OccupationsConfig:
-    """Parses and exposes the 18-occupation panel from config/occupations.toml."""
-
-    def __init__(self, config_path: Path) -> None:
-        self._config_path = config_path
-        with config_path.open("rb") as f:
-            data = tomllib.load(f)
-        self._occupations: list[dict[str, Any]] = data["occupation"]
-
-    @property
-    def occupations(self) -> list[dict[str, Any]]:
-        return self._occupations
-
-
 @pytest.fixture(scope="session")
-def occupations() -> list[dict[str, Any]]:
+def occupations() -> tuple[dict[str, Any], ...]:
     return OccupationsConfig(_CONFIG_PATH).occupations
 
 
@@ -47,10 +33,10 @@ def onet_loader() -> OnetLoader:
 
 
 class TestPanelStructure:
-    def test_exactly_18_occupations(self, occupations: list[dict[str, Any]]) -> None:
+    def test_exactly_18_occupations(self, occupations: tuple[dict[str, Any], ...]) -> None:
         assert len(occupations) == 18
 
-    def test_balanced_3x3x2_panel(self, occupations: list[dict[str, Any]]) -> None:
+    def test_balanced_3x3x2_panel(self, occupations: tuple[dict[str, Any], ...]) -> None:
         cells: dict[tuple[str, str], int] = {}
         for o in occupations:
             key = (o["stereotype"], o["skill_tier"])
@@ -61,11 +47,11 @@ class TestPanelStructure:
                     cells.get((stereo, tier)) == 2
                 ), f"Cell ({stereo}, {tier}) has {cells.get((stereo, tier), 0)} occupations, expected 2"
 
-    def test_all_soc_codes_unique(self, occupations: list[dict[str, Any]]) -> None:
+    def test_all_soc_codes_unique(self, occupations: tuple[dict[str, Any], ...]) -> None:
         socs = [o["soc"] for o in occupations]
         assert len(set(socs)) == len(socs)
 
-    def test_all_onet_soc_codes_unique(self, occupations: list[dict[str, Any]]) -> None:
+    def test_all_onet_soc_codes_unique(self, occupations: tuple[dict[str, Any], ...]) -> None:
         codes = [o["onet_soc"] for o in occupations]
         assert len(set(codes)) == len(codes)
 
@@ -73,7 +59,7 @@ class TestPanelStructure:
 class TestOnetResolution:
     def test_every_onet_soc_resolves_in_onet(
         self,
-        occupations: list[dict[str, Any]],
+        occupations: tuple[dict[str, Any], ...],
         onet_loader: OnetLoader,
     ) -> None:
         df = onet_loader.load_occupations()
@@ -83,7 +69,7 @@ class TestOnetResolution:
 
     def test_titles_match_onet_canonical(
         self,
-        occupations: list[dict[str, Any]],
+        occupations: tuple[dict[str, Any], ...],
         onet_loader: OnetLoader,
     ) -> None:
         df = onet_loader.load_occupations()
@@ -97,7 +83,7 @@ class TestOnetResolution:
 
     def test_every_soc_has_at_least_one_task(
         self,
-        occupations: list[dict[str, Any]],
+        occupations: tuple[dict[str, Any], ...],
         onet_loader: OnetLoader,
     ) -> None:
         empty: list[str] = []

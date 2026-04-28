@@ -1,0 +1,33 @@
+{{ resume.name }}
+{{ resume.contact.email }}  |  {{ resume.contact.phone }}
+{% if resume.summary %}
+PROFESSIONAL SUMMARY
+{{ resume.summary }}
+{% endif %}
+EDUCATION
+{% for ed in resume.education -%}
+{{ ed.degree }}, {{ ed.field }} -- {{ ed.institution }} ({{ ed.year }})
+{% endfor %}
+EXPERIENCE
+{% for ex in resume.experience -%}
+{{ ex.title }} -- {{ ex.employer }} ({{ ex.start_year }}-{{ ex.end_year }})
+{% for bullet in ex.bullets -%}
+- {{ bullet }}
+{% endfor %}
+{% endfor -%}
+SKILLS
+{{ resume.skills | join(", ") }}
+{% if resume.certifications %}
+CERTIFICATIONS
+{% for cert in resume.certifications -%}
+- {{ cert.name }} ({{ cert.issuer }}, {{ cert.year }})
+{% endfor -%}
+{% endif -%}
+{% if resume.objective_signals %}
+OBJECTIVE QUALIFICATIONS
+- GPA: {{ "%.2f"|format(resume.objective_signals.gpa) }} / 4.00
+- Standardized test percentile: {{ "%.0f"|format(resume.objective_signals.test_score_percentile) }}
+{% if resume.objective_signals.certification_ids -%}
+- Certification IDs: {{ resume.objective_signals.certification_ids | join(", ") }}
+{% endif -%}
+{% endif -%}

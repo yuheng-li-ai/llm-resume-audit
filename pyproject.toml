@@ -138,6 +138,8 @@ module = [
   "faker.*",
   "pandas",
   "pandas.*",
+  "jinja2",
+  "jinja2.*",
 ]
 ignore_missing_imports = true
 

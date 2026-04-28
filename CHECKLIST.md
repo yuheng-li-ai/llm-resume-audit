@@ -153,17 +153,17 @@
 - [x] **1.1.3** Filter to the eighteen occupations in `config/occupations.toml` (locked 3×3×2 panel — see CHECKLIST rule 4). Verification test asserts every TOML SOC resolves to a non-empty O*NET row; if any miss, **stop and ask** before substituting a sibling SOC.
 
 ### 1.2 Faker + Jinja2 templating
-- [ ] **1.2.1** Define résumé schema in `src/llm_audit/schema.py` using Pydantic v2: `Resume(name, contact, education[], experience[], skills[], certifications[], objective_signals?)`
-- [ ] **1.2.2** Build Jinja2 template `templates/resume.j2` producing plain-text résumés (no Markdown, no LLM-style flourishes)
-- [ ] **1.2.3** Implement `resume_factory.build_resumes(n: int, seed: int) -> list[Resume]` that, per occupation, samples task statements, years of experience (5/15/25 brackets matching `T_p` levels), and education tier
-- [ ] **1.2.4** Generate ~450 base résumés (25 per occupation × 18); persist to `data/processed/base_resumes.parquet` with columns `[resume_id, occupation_soc, years_exp_bracket, education_tier, body_text]`
+- [x] **1.2.1** Define résumé schema in `src/llm_audit/schema.py` using Pydantic v2: `Resume(name, contact, education[], experience[], skills[], certifications[], objective_signals?)`
+- [x] **1.2.2** Build Jinja2 template `templates/resume.j2` producing plain-text résumés (no Markdown, no LLM-style flourishes)
+- [x] **1.2.3** Implement `resume_factory.build_resumes(n: int, seed: int) -> list[Resume]` that, per occupation, samples task statements, years of experience (5/15/25 brackets matching `T_p` levels), and education tier
+- [x] **1.2.4** Generate ~450 base résumés (25 per occupation × 18); persist to `data/processed/base_resumes.parquet` with columns `[resume_id, occupation_soc, years_exp_bracket, education_tier, body_text]`
   - **AC:** parquet has exactly 450 rows (25 × 18, exact); `body_text.str.len().mean()` between 1,500 and 3,500 chars; **no row contains substrings `"As an AI"`, `"In conclusion"`, or other LLM-stamp phrases** (regression test)
   - **Risk:** Faker locale defaulting to `en_US` may seed names that conflict with Phase 2 demographic name corpus; use placeholder `"<<NAME>>"` token in body_text
   - **Rollback:** delete the parquet, fix template, regenerate with same seed
 
 ### 1.3 Snapshot test
-- [ ] **1.3.1** Add `tests/test_resume_factory.py` snapshotting résumé #0 and #449 byte-for-byte
-- [ ] **1.3.2** Tag `v0.1-resumes`
+- [x] **1.3.1** Add `tests/test_resume_factory.py` snapshotting résumé #0 and #449 byte-for-byte
+- [x] **1.3.2** Tag `v0.1-resumes`
 
 ---
 
@@ -379,6 +379,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 | `v0.0-scaffold` | 0 | 2026-04-28 | commit `e7ed380`; `make test` 2 passed, cov 100% (0 stmts); pre-commit hooks all green |
 | `v0.1a-design-v2` | 0.5+ (design lock revision) | 2026-04-28 | commit `2e4a2fa`; 8 → 18 occupations (3×3×2), N≈8,000, ~9 reps/cell; .tex+.md cascaded, pdflatex two-pass clean (9 pages, 364,227 B) |
 | `v0.1.1-onet` | 1.1 | 2026-04-28 | commit `1112cf2`; OnetLoader class (lazy+cached), 21 new tests across `test_onet_loader.py` (14) + `test_occupations_config.py` (7); all 18 SOCs resolve in O*NET 28.1 with canonical titles; coverage 96.77% on `onet_loader.py` |
+| `v0.1-resumes` | 1.2 + 1.3 | 2026-04-28 | ResumeFactory (OOP, deterministic per-id RNG, Jinja2-rendered) + Pydantic frozen Resume schema + SeedConfig + OccupationsConfig; 450-row base_resumes.parquet (25/SOC × 18, mean body 1,725 chars, median 1,674, max 2,809; no LLM-stamp phrases); snapshot tests on résumé #0 and #449; 71 tests, coverage 93.39% |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
