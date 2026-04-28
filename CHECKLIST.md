@@ -142,15 +142,15 @@
 > Goal: ~450 base templated résumés (~25 per occupation × 18 occupations) anchored on O*NET 28.1 task taxonomies. **No LLM-written prose** (per `proposal_final_A.tex` §5).
 
 ### 1.1 O*NET ingestion
-- [ ] **1.1.1** Download O*NET Database 28.1 release bundle (`https://www.onetcenter.org/database.html` — confirm URL still live before fetch)
+- [x] **1.1.1** Download O*NET Database 28.1 release bundle (`https://www.onetcenter.org/database.html` — confirm URL still live before fetch)
   - **AC:** `data/raw/onet/Task Statements.txt` and `Occupation Data.txt` present, sha256 logged to `data/raw/onet/MANIFEST.sha256`
   - **Risk:** version drift; pin the exact zip name in the manifest
   - **Rollback:** delete `data/raw/onet/` and re-fetch with the pinned URL
 
-- [ ] **1.1.2** Author `src/llm_audit/onet_loader.py` to parse Task Statements + Occupation Data into a typed `pandas.DataFrame`
+- [x] **1.1.2** Author `src/llm_audit/onet_loader.py` to parse Task Statements + Occupation Data into a typed `pandas.DataFrame`
   - **AC:** unit test loads the bundle, asserts ≥1,000 occupations and ≥18,000 tasks (current O*NET 28.1 ground truth)
 
-- [ ] **1.1.3** Filter to the eighteen occupations in `config/occupations.toml` (locked 3×3×2 panel — see CHECKLIST rule 4). Verification test asserts every TOML SOC resolves to a non-empty O*NET row; if any miss, **stop and ask** before substituting a sibling SOC.
+- [x] **1.1.3** Filter to the eighteen occupations in `config/occupations.toml` (locked 3×3×2 panel — see CHECKLIST rule 4). Verification test asserts every TOML SOC resolves to a non-empty O*NET row; if any miss, **stop and ask** before substituting a sibling SOC.
 
 ### 1.2 Faker + Jinja2 templating
 - [ ] **1.2.1** Define résumé schema in `src/llm_audit/schema.py` using Pydantic v2: `Resume(name, contact, education[], experience[], skills[], certifications[], objective_signals?)`

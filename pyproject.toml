@@ -136,6 +136,8 @@ module = [
   "linearmodels.*",
   "statsmodels.*",
   "faker.*",
+  "pandas",
+  "pandas.*",
 ]
 ignore_missing_imports = true
 
