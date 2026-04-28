@@ -1,0 +1,202 @@
+# Frozen 18-occupation panel for Proposal A factorial audit.
+#
+# Design: balanced 3 x 3 x 2 occupation panel
+#   stereotype  in {male, female, neutral}
+#   skill_tier  in {high, mid, low}
+#   2 occupations per (stereotype x tier) cell
+#
+# Selection criteria:
+#   1. Coverage: every (stereotype x tier) cell populated by exactly 2 occupations
+#   2. O*NET 28.1 data completeness (Occupation Data + Skills + Abilities + Knowledge populated)
+#   3. BLS OES May-2024 employment >= ~100K (relevance to real labor markets)
+#   4. Bertrand-Mullainathan / Tilcsik / Goldin precedent for stereotype assignment
+#
+# Lock policy: per CHECKLIST rule 4, this list is frozen. Changes require
+# explicit user approval; see Phase 1.1 verification test.
+#
+# Reference: O*NET-SOC 28.1 detailed occupation list
+#   https://www.onetcenter.org/taxonomy/2025/list/?fmt=html
+# OES values are approximate published BLS aggregates (May 2024 release);
+# verify exact figures during Phase 1.1.
+#
+# SOC format: "XX-YYYY"; O*NET-SOC adds ".NN" suffix (we store both).
+
+# ============================================================
+# M-leaning, high tier
+# ============================================================
+
+[[occupation]]
+soc          = "15-1252"
+onet_soc     = "15-1252.00"
+title        = "Software Developers"
+stereotype   = "male"
+skill_tier   = "high"
+oes_may_2024 = 1656880
+
+[[occupation]]
+soc          = "11-2022"
+onet_soc     = "11-2022.00"
+title        = "Sales Managers"
+stereotype   = "male"
+skill_tier   = "high"
+oes_may_2024 = 575880
+
+# ============================================================
+# M-leaning, mid tier
+# ============================================================
+
+[[occupation]]
+soc          = "47-2031"
+onet_soc     = "47-2031.00"
+title        = "Carpenters"
+stereotype   = "male"
+skill_tier   = "mid"
+oes_may_2024 = 651040
+
+[[occupation]]
+soc          = "49-3023"
+onet_soc     = "49-3023.00"
+title        = "Automotive Service Technicians and Mechanics"
+stereotype   = "male"
+skill_tier   = "mid"
+oes_may_2024 = 677500
+
+# ============================================================
+# M-leaning, low tier
+# ============================================================
+
+[[occupation]]
+soc          = "53-3032"
+onet_soc     = "53-3032.00"
+title        = "Heavy and Tractor-Trailer Truck Drivers"
+stereotype   = "male"
+skill_tier   = "low"
+oes_may_2024 = 2082290
+
+[[occupation]]
+soc          = "33-9032"
+onet_soc     = "33-9032.00"
+title        = "Security Guards"
+stereotype   = "male"
+skill_tier   = "low"
+oes_may_2024 = 1176500
+
+# ============================================================
+# F-leaning, high tier
+# ============================================================
+
+[[occupation]]
+soc          = "29-1141"
+onet_soc     = "29-1141.00"
+title        = "Registered Nurses"
+stereotype   = "female"
+skill_tier   = "high"
+oes_may_2024 = 3175390
+
+[[occupation]]
+soc          = "23-1011"
+onet_soc     = "23-1011.00"
+title        = "Lawyers"
+stereotype   = "female"
+skill_tier   = "high"
+oes_may_2024 = 731340
+
+# ============================================================
+# F-leaning, mid tier
+# ============================================================
+
+[[occupation]]
+soc          = "25-2021"
+onet_soc     = "25-2021.00"
+title        = "Elementary School Teachers, Except Special Education"
+stereotype   = "female"
+skill_tier   = "mid"
+oes_may_2024 = 1435260
+
+[[occupation]]
+soc          = "43-6014"
+onet_soc     = "43-6014.00"
+title        = "Secretaries and Administrative Assistants, Except Legal, Medical, and Executive"
+stereotype   = "female"
+skill_tier   = "mid"
+oes_may_2024 = 1660300
+
+# ============================================================
+# F-leaning, low tier
+# ============================================================
+
+[[occupation]]
+soc          = "31-1131"
+onet_soc     = "31-1131.00"
+title        = "Nursing Assistants"
+stereotype   = "female"
+skill_tier   = "low"
+oes_may_2024 = 1396790
+
+[[occupation]]
+soc          = "39-9011"
+onet_soc     = "39-9011.00"
+title        = "Childcare Workers"
+stereotype   = "female"
+skill_tier   = "low"
+oes_may_2024 = 456360
+
+# ============================================================
+# Neutral, high tier
+# ============================================================
+
+[[occupation]]
+soc          = "13-2011"
+onet_soc     = "13-2011.00"
+title        = "Accountants and Auditors"
+stereotype   = "neutral"
+skill_tier   = "high"
+oes_may_2024 = 1435770
+
+[[occupation]]
+soc          = "13-2051"
+onet_soc     = "13-2051.00"
+title        = "Financial and Investment Analysts"
+stereotype   = "neutral"
+skill_tier   = "high"
+oes_may_2024 = 341340
+
+# ============================================================
+# Neutral, mid tier
+# ============================================================
+
+[[occupation]]
+soc          = "43-3031"
+onet_soc     = "43-3031.00"
+title        = "Bookkeeping, Accounting, and Auditing Clerks"
+stereotype   = "neutral"
+skill_tier   = "mid"
+oes_may_2024 = 1464560
+
+[[occupation]]
+soc          = "43-4051"
+onet_soc     = "43-4051.00"
+title        = "Customer Service Representatives"
+stereotype   = "neutral"
+skill_tier   = "mid"
+oes_may_2024 = 2810000
+
+# ============================================================
+# Neutral, low tier
+# ============================================================
+
+[[occupation]]
+soc          = "41-2011"
+onet_soc     = "41-2011.00"
+title        = "Cashiers"
+stereotype   = "neutral"
+skill_tier   = "low"
+oes_may_2024 = 3300000
+
+[[occupation]]
+soc          = "37-2011"
+onet_soc     = "37-2011.00"
+title        = "Janitors and Cleaners, Except Maids and Housekeeping Cleaners"
+stereotype   = "neutral"
+skill_tier   = "low"
+oes_may_2024 = 2200500

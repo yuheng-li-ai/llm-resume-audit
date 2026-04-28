@@ -13,7 +13,7 @@
 1. **One item at a time.** Do not start item N+1 before item N is checked off and committed.
 2. **Stop on uncertainty.** If any step produces an unexpected error, ambiguous output, or a question whose answer is not in `proposal_final_A.tex` / `proposal_a_data_plan.md`, stop, surface the question, do **not** improvise.
 3. **Rollback discipline.** Each phase ends with a `git tag` checkpoint. Any failure inside a phase rolls back to the prior tag (`git reset --hard <tag>`), not forward-patched.
-4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the four-model panel (GLM 5.1, GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B), eight occupations, identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
+4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the four-model panel (GLM 5.1, GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B), eighteen occupations (balanced 3×3×2 panel: stereotype {M, F, N} × skill tier {high, mid, low} × 2 occupations per cell, N≈8,000 résumés ≈ 9 replicates per cell), identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
 5. **Output sink.** All artefacts land under `/home/lyh/llm-resume-audit/`. The proposal `.tex` in the Obsidian vault is touched only in Phase 9.4 and only after review.
 6. **Harness use.** Each code-producing item triggers the relevant agent (`code-reviewer`, `security-reviewer`, `tdd-guide`, `python-reviewer`) per `~/.claude/rules/common/code-review.md`. No skipping.
 7. **Determinism.** Every random draw uses a seed pulled from `config/seeds.toml`. No bare `random.choice` calls.
