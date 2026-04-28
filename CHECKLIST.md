@@ -13,11 +13,12 @@
 1. **One item at a time.** Do not start item N+1 before item N is checked off and committed.
 2. **Stop on uncertainty.** If any step produces an unexpected error, ambiguous output, or a question whose answer is not in `proposal_final_A.tex` / `proposal_a_data_plan.md`, stop, surface the question, do **not** improvise.
 3. **Rollback discipline.** Each phase ends with a `git tag` checkpoint. Any failure inside a phase rolls back to the prior tag (`git reset --hard <tag>`), not forward-patched.
-4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the five-model panel, eight occupations, identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
+4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the four-model panel (GLM 5.1, GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B), eight occupations, identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
 5. **Output sink.** All artefacts land under `/home/lyh/llm-resume-audit/`. The proposal `.tex` in the Obsidian vault is touched only in Phase 9.4 and only after review.
 6. **Harness use.** Each code-producing item triggers the relevant agent (`code-reviewer`, `security-reviewer`, `tdd-guide`, `python-reviewer`) per `~/.claude/rules/common/code-review.md`. No skipping.
 7. **Determinism.** Every random draw uses a seed pulled from `config/seeds.toml`. No bare `random.choice` calls.
 8. **Secrets.** API keys live in `.env` (git-ignored). `.env.example` documents required variables. Never log a key, never echo it to stdout, never commit a populated `.env`.
+9. **OOP style.** All Python under `src/llm_audit/` is class-based: scoring clients inherit `ScoringClient(ABC)`; `OnetLoader`, `ResumeFactory`, `NameCorpus`, `TreatmentInjector`, `OLSAnalyzer`, `CATEEstimator`, `MHTCorrector`, `BatchRunner` are classes encapsulating state + behavior. Tests exercise the public class API.
 
 ---
 
@@ -96,12 +97,12 @@
   - Live `.env` (chmod 600, git-ignored) populated with real keys this session. **Rotate all four keys after audit run completes** — they were exposed in the conversation transcript and `~/.claude/` log files.
 
 ### 0.2 Python environment
-- [ ] **0.2.1** Decide environment manager: anaconda (already on PATH at `/home/lyh/anaconda3/`) vs. fresh `venv`. Default = `conda create -n llm-audit python=3.11`
+- [x] **0.2.1** Decide environment manager: anaconda (already on PATH at `/home/lyh/anaconda3/`) vs. fresh `venv`. Default = `conda create -n llm-audit python=3.11`
   - **AC:** `conda env list` shows `llm-audit`; `python --version` reports 3.11.x inside it
   - **Risk:** anaconda's default channel may lag on `econml`; may need `pip install` inside conda env
   - **Rollback:** `conda env remove -n llm-audit`
 
-- [ ] **0.2.2** Author `pyproject.toml` with pinned dependencies:
+- [x] **0.2.2** Author `pyproject.toml` with pinned dependencies:
   - Core: `python>=3.11`, `pandas>=2.2`, `pyarrow`, `numpy`, `scipy`, `pydantic>=2`, `tomli`
   - Templating: `Faker>=24`, `Jinja2>=3.1`
   - LLM SDKs: `zhipuai>=2.1` (GLM family), `google-generativeai>=0.8` (Gemini 2.5 Flash), `groq>=0.11` (Llama 3.3 70B)
@@ -111,28 +112,28 @@
   - **Risk:** `econml` wheels lag Python 3.13; pin Python to 3.11
   - **Rollback:** delete `pyproject.toml`; revert env
 
-- [ ] **0.2.3** Snapshot resolved versions to `requirements.lock.txt` (`pip freeze > requirements.lock.txt`)
+- [x] **0.2.3** Snapshot resolved versions to `requirements.lock.txt` (`pip freeze > requirements.lock.txt`)
   - **AC:** lockfile contains all dependencies with `==` pins
 
 ### 0.3 Tooling guardrails
-- [ ] **0.3.1** Configure `ruff` in `pyproject.toml` (line-length 100, target-version py311, select `E,F,I,N,B,W,UP`)
-- [ ] **0.3.2** Configure `black` (line-length 100)
-- [ ] **0.3.3** Configure `mypy` (strict mode, ignore-missing-imports for vendor SDKs)
-- [ ] **0.3.4** Configure `pytest` (`--cov=src/llm_audit --cov-fail-under=80`)
-- [ ] **0.3.5** Install `pre-commit` hooks running ruff + black + mypy on staged Python files
+- [x] **0.3.1** Configure `ruff` in `pyproject.toml` (line-length 100, target-version py311, select `E,F,I,N,B,W,UP`)
+- [x] **0.3.2** Configure `black` (line-length 100)
+- [x] **0.3.3** Configure `mypy` (strict mode, ignore-missing-imports for vendor SDKs)
+- [x] **0.3.4** Configure `pytest` (`--cov=src/llm_audit --cov-fail-under=80`)
+- [x] **0.3.5** Install `pre-commit` hooks running ruff + black + mypy on staged Python files
   - **AC:** `pre-commit run --all-files` exits 0 on the empty scaffold
 
 ### 0.4 Version control checkpoint
-- [ ] **0.4.1** `git init` inside `/home/lyh/llm-resume-audit/`
-- [ ] **0.4.2** Initial commit: `chore: scaffold project skeleton and tooling`
-- [ ] **0.4.3** Tag `v0.0-scaffold`
+- [x] **0.4.1** `git init` inside `/home/lyh/llm-resume-audit/`
+- [x] **0.4.2** Initial commit: `chore: scaffold project skeleton and tooling`
+- [x] **0.4.3** Tag `v0.0-scaffold`
   - **AC:** `git tag` lists `v0.0-scaffold`
   - **Rollback target:** any failure in subsequent phases can `git reset --hard v0.0-scaffold`
 
 ### 0.5 Process verification
-- [ ] **0.5.1** Author `README.md` documenting: project purpose (one-paragraph pointer to proposal), env setup, `make test`, `make lint`, `make audit-pilot`, rollback policy, link back to `/mnt/c/Obsidian/note/Data Mining/proposal_final_A.tex`
-- [ ] **0.5.2** Author `Makefile` with targets: `install`, `test`, `lint`, `format`, `audit-pilot`, `audit-main`, `clean`
-- [ ] **0.5.3** Run `make test` against the empty scaffold; should pass with 100% coverage on zero lines
+- [x] **0.5.1** Author `README.md` documenting: project purpose (one-paragraph pointer to proposal), env setup, `make test`, `make lint`, `make audit-pilot`, rollback policy, link back to `/mnt/c/Obsidian/note/Data Mining/proposal_final_A.tex`
+- [x] **0.5.2** Author `Makefile` with targets: `install`, `test`, `lint`, `format`, `audit-pilot`, `audit-main`, `clean`
+- [x] **0.5.3** Run `make test` against the empty scaffold; should pass with 100% coverage on zero lines
 
 ---
 
@@ -375,7 +376,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 
 | Tag | Phase closed | Date | Notes |
 |---|---|---|---|
-| `v0.0-scaffold` | 0 | | |
+| `v0.0-scaffold` | 0 | 2026-04-28 | commit `e7ed380`; `make test` 2 passed, cov 100% (0 stmts); pre-commit hooks all green |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
