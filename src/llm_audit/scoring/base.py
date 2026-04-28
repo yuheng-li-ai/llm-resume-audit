@@ -1,9 +1,9 @@
 """ScoringClient ABC + ScoringResult dataclass (Phase 5.2).
 
-Each provider-specific subclass (ZhipuClient, GeminiClient, GroqClient)
-implements `score(prompt, cell_id) -> ScoringResult` and
-`estimate_cost(n_calls, avg_tokens_in, avg_tokens_out) -> float` using its
-own SDK and pricing.
+Provider-specific subclasses (currently ZhipuClient for GLM 5.1 and GLM 4.5)
+implement `score(prompt, cell_id) -> ScoringResult` and
+`estimate_cost(n_calls, avg_tokens_in, avg_tokens_out) -> float` using
+their own SDK and pricing.
 
 Subclasses MUST set class-level attributes `provider` (vendor identifier)
 and `model_id` (specific model name), and MUST NOT make any LLM API

@@ -71,7 +71,7 @@ class TestScoringPrompt:
             resume_text="y" * 1700,
         )
         total = len(SCORING_SYSTEM_PROMPT) + len(p.user_message)
-        assert 1500 < total < 4000
+        assert 1500 < total < 5000
 
 
 class TestScoringResponse:
@@ -111,6 +111,6 @@ class TestJsonSchema:
 
     def test_schema_score_range_0_100(self) -> None:
         score_prop = SCORING_RESPONSE_JSON_SCHEMA["properties"]["hiring_score"]
-        assert score_prop["type"] == "integer"
+        assert score_prop["type"] == "number"
         assert score_prop["minimum"] == 0
         assert score_prop["maximum"] == 100

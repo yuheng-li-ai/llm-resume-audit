@@ -13,7 +13,7 @@
 1. **One item at a time.** Do not start item N+1 before item N is checked off and committed.
 2. **Stop on uncertainty.** If any step produces an unexpected error, ambiguous output, or a question whose answer is not in `proposal_final_A.tex` / `proposal_a_data_plan.md`, stop, surface the question, do **not** improvise.
 3. **Rollback discipline.** Each phase ends with a `git tag` checkpoint. Any failure inside a phase rolls back to the prior tag (`git reset --hard <tag>`), not forward-patched.
-4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the four-model panel (GLM 5.1, GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B), eighteen occupations (balanced 3×3×2 panel: stereotype {M, F, N} × skill tier {high, mid, low} × 2 occupations per cell, N≈8,000 résumés ≈ 9 replicates per cell), identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
+4. **Locked content.** Hypotheses H1/H2/H3, factorial design (2×4×3×2), the two-model panel (GLM 5.1 and GLM 4.5, both Zhipu paid API), eighteen occupations (balanced 3×3×2 panel: stereotype {M, F, N} × skill tier {high, mid, low} × 2 occupations per cell, N≈8,000 résumés ≈ 9 replicates per cell), identification framework, and reference list are **frozen**. Any proposed change requires explicit user approval before edit.
 5. **Output sink.** All artefacts land under `/home/lyh/llm-resume-audit/`. The proposal `.tex` in the Obsidian vault is touched only in Phase 9.4 and only after review.
 6. **Harness use.** Each code-producing item triggers the relevant agent (`code-reviewer`, `security-reviewer`, `tdd-guide`, `python-reviewer`) per `~/.claude/rules/common/code-review.md`. No skipping.
 7. **Determinism.** Every random draw uses a seed pulled from `config/seeds.toml`. No bare `random.choice` calls.
@@ -58,9 +58,7 @@
     - `scoring/`
       - `__init__.py`
       - `base.py`
-      - `zhipu_client.py`            *(GLM 5.1, GLM-4 Flash)*
-      - `gemini_client.py`           *(Google AI Studio, Gemini 2.5 Flash)*
-      - `groq_client.py`             *(Llama 3.3 70B)*
+      - `zhipu_client.py`            *(GLM 5.1 + GLM 4.5, Zhipu paid API)*
       - `batch_runner.py`
     - `analysis/`
       - `__init__.py`
@@ -92,9 +90,9 @@
 - [x] **0.1.2** Author `.gitignore` covering `.env`, `data/`, `__pycache__/`, `.pytest_cache/`, `*.parquet`, `outputs/`, `.coverage`, `htmlcov/`, `.ipynb_checkpoints/`, `*.aux`, `*.log`, `*.out`, `*.toc`, `.mypy_cache/`, `.ruff_cache/`
   - **AC:** `git check-ignore` returns success for sample `.env` and sample `data/foo.parquet` *(deferred — verifies after Phase 0.4.1 `git init`)*
 
-- [x] **0.1.3** Author `.env.example` enumerating required keys (no real values): `ZHIPUAI_API_KEY`, `GOOGLE_AI_STUDIO_API_KEY`, `GROQ_API_KEY`, `OSF_TOKEN`
-  - **AC:** every key listed in `proposal_final_A.tex` Layer-4 source list is represented (Zhipu, Google AI Studio, Groq) ✓
-  - Live `.env` (chmod 600, git-ignored) populated with real keys this session. **Rotate all four keys after audit run completes** — they were exposed in the conversation transcript and `~/.claude/` log files.
+- [x] **0.1.3** Author `.env.example` enumerating required keys (no real values): `ZHIPUAI_API_KEY`, `OSF_TOKEN`
+  - **AC:** every key listed in `proposal_final_A.tex` Layer-4 source list is represented (Zhipu only — single-vendor 2-model panel locked at v0.5b) ✓
+  - Live `.env` (chmod 600, git-ignored) populated with real key this session. **Rotate Zhipu key after audit run completes** — it was exposed in the conversation transcript and `~/.claude/` log files.
 
 ### 0.2 Python environment
 - [x] **0.2.1** Decide environment manager: anaconda (already on PATH at `/home/lyh/anaconda3/`) vs. fresh `venv`. Default = `conda create -n llm-audit python=3.11`
@@ -105,7 +103,7 @@
 - [x] **0.2.2** Author `pyproject.toml` with pinned dependencies:
   - Core: `python>=3.11`, `pandas>=2.2`, `pyarrow`, `numpy`, `scipy`, `pydantic>=2`, `tomli`
   - Templating: `Faker>=24`, `Jinja2>=3.1`
-  - LLM SDKs: `zhipuai>=2.1` (GLM family), `google-generativeai>=0.8` (Gemini 2.5 Flash), `groq>=0.11` (Llama 3.3 70B)
+  - LLM SDK: `zhipuai>=2.1` (GLM 5.1 + GLM 4.5; single-vendor 2-model panel locked at v0.5b)
   - Stats: `statsmodels`, `linearmodels`, `econml>=0.15`, `scikit-learn>=1.4`
   - Dev: `pytest>=8`, `pytest-cov>=5`, `pytest-xdist`, `ruff`, `black`, `mypy`, `pre-commit`
   - **AC:** `pip install -e .[dev]` exits 0 inside the env
@@ -223,21 +221,19 @@
 
 ## Phase 5 — Layer 4: Multi-LLM scoring loop
 
-> Goal: ~8,000 cells × 4 models = ~32,000 scores, with prompt caching, free-tier rate-limit pacing, calibration injection, and a real cost tracker. Funded by the user's existing ¥100 Zhipu balance (projected spend ¥60-80) plus Google AI Studio and Groq free tiers — no API top-ups required.
+> Goal: ~8,000 cells × 2 models = ~16,000 scores, with prompt caching, single-vendor RPM pacing, calibration injection, and a real cost tracker. Funded by the user's Zhipu balance (RMB 300; projected combined spend ~RMB 275 — RMB 195 GLM 5.1 plus ~RMB 80 GLM 4.5).
 
 ### 5.1 Prompt construction
 - [x] **5.1.1** Author `utils/prompts.py` with a single canonical scoring prompt (system + user). System prompt **must not name treatments** (per limitation §12).
-- [x] **5.1.2** Static portion (system + job description) goes in cache-eligible prefix; dynamic portion (résumé body) trails. Zhipu and Gemini both support prompt caching; Groq does not.
-- [x] **5.1.3** Pilot prompt against a single GLM-4 Flash call (cheapest provider) manually before scaling. Inspect output JSON shape.
+- [x] **5.1.2** Static portion (system + job description) goes in cache-eligible prefix; dynamic portion (résumé body) trails. Zhipu paid API supports prompt caching for both GLM 5.1 and GLM 4.5.
+- [x] **5.1.3** Pilot prompt against a single GLM 5 call manually before scaling. Inspect output JSON shape.
   - **AC:** model returns `{"hiring_score": float in [0,100], "rationale": str}` parseable on the first try
-  - **Risk:** model returns prose-only response; need structured-output mode (Zhipu function calling, Gemini `response_schema`, Groq JSON mode)
+  - **Risk:** model returns prose-only response; need structured-output mode (Zhipu function calling)
 
-### 5.2 Per-provider clients
-- [x] **5.2.1** `zhipu_client.py` — synchronous calls to GLM 5.1 and GLM-4 Flash via `zhipuai` SDK; structured output via tool/function call; prompt caching enabled on system prefix
-- [x] **5.2.2** `gemini_client.py` — synchronous calls to Gemini 2.5 Flash via `google-generativeai`; `response_schema` for JSON mode; respect free-tier limits (15 RPM, 1500 RPD)
-- [x] **5.2.3** `groq_client.py` — synchronous calls to Llama 3.3 70B via `groq` SDK; JSON-mode response; respect free-tier limits (30 RPM and ~500K tokens/day)
-  - **AC each:** integration test submits 5 cells, retrieves parseable scores, no raw API key in logs
-  - **Risk:** SDK version drift; pin in `pyproject.toml`. Groq daily token cap is the binding constraint (see 5.5 wall-clock estimate).
+### 5.2 Per-provider client
+- [x] **5.2.1** `zhipu_client.py` — synchronous calls to GLM 5.1 and GLM 4.5 via `zhipuai` SDK; structured output via tool/function call; prompt caching enabled on system prefix
+  - **AC:** integration test submits 5 cells against each model, retrieves parseable scores, no raw API key in logs
+  - **Risk:** SDK version drift; pin in `pyproject.toml`. RPM is the binding constraint at single-vendor scale (see 5.5 wall-clock estimate).
 
 ### 5.3 Batch runner
 - [x] **5.3.1** `batch_runner.py` orchestrating per-provider submission, polling, retry-with-exponential-backoff, dedupe on `(cell_id, model_id)`. Per-provider rate-limiter enforces free-tier RPM/RPD/daily-token caps in-process.
@@ -246,16 +242,16 @@
   - **AC:** running 100-cell pilot reports cost spent within ±20% of forward estimate; no key leaked
 
 ### 5.4 Pilot run (100 cells, 1 model)
-- [x] **5.4.1** Execute pilot on GLM-4 Flash (cheapest); inspect score distribution, parse-failure rate, latency
+- [x] **5.4.1** Execute pilot on GLM 5; inspect score distribution, parse-failure rate, latency
   - **AC:** parse success ≥ 99%; score variance > 0; no NaNs
   - **Risk:** model refuses to score résumés on ethical grounds → escalate prompt-engineering decision; **stop and ask**
 
-### 5.5 Main batch (~8,000 × 4)
+### 5.5 Main batch (~8,000 × 2)
 - [ ] **5.5.1** Pre-flight: confirm OSF pre-registration is locked (Phase 6 must precede this)
 - [ ] **5.5.2** Submit per provider; persist `data/audit/scores.parquet` with `[cell_id, model_id, hiring_score, rationale, latency_ms, cost_local, currency, batch_id, retrieved_at]` (retrieved_at ISO-8601 UTC)
 - [ ] **5.5.3** Reconcile dropped/failed cells; re-submit only those (no full re-run)
   - **AC:** ≥ 99% of (cell × model) pairs have a score; failed pairs logged with reason
-- [ ] **5.5.4** Wall-clock budget: ~14-15 days end-to-end, dominated by Groq Llama 3.3 70B free-tier daily token cap (~500K tok/day). Budget per call: ~100 tok system + ~150 tok job description + ~500 tok résumé + ~100 tok output ≈ 850 tok/call typical. ~8,000 calls × ~850 tok ≈ 6.8M tok ⇒ ~14 days at the cap. **Hard constraint:** the résumé `body_text` median must stay ≤ 700 tok (~2,800 chars) or the wall-clock blows past 18 days. Phase 1.2 AC enforces 1,500-3,500 char range; verify median lands ≤ 2,800. Zhipu finishes in ~2 days; Gemini free finishes in ~6 days. Gate progress per provider in the dashboard.
+- [ ] **5.5.4** Wall-clock budget: ~9 hours end-to-end at single-vendor RPM (Zhipu paid API only). Budget per call: ~100 tok system + ~150 tok job description + ~500 tok résumé + ~900 tok output ≈ 1.65K tok/call typical. ~16,000 calls (8,000 × 2 models) at RPM 30 ≈ 9 hours wall-clock. No free-tier daily caps apply; pacing is RPM only. Cost: GLM 5.1 ~RMB 195 + GLM 4.5 ~RMB 80 = ~RMB 275 of RMB 300 balance, leaving ~RMB 25 headroom for one full re-run of any single occupation in the event of a coding bug or upstream API outage.
 - [ ] **5.5.5** Tag `v0.5-scores-main`
 
 ---
@@ -359,7 +355,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 4. Faker locale or name registry produces a name that overlaps with the demographic corpus (collision risk).
 5. `econml` install fails on Python 3.11.
 6. Any phase tag would land with `pytest --cov` below 80%.
-7. Zhipu pricing changes materially against the user's ¥100 balance (track real spend in `cost_log.csv`; do not silently top up). Free-tier quotas on Google AI Studio or Groq tighten such that the run cannot finish within the timeline.
+7. Zhipu pricing changes materially against the user's RMB 300 balance (track real spend in `cost_log.csv`; do not silently top up). GLM 4.5 actual cost diverges materially from the ~RMB 80 estimate after the diagnostic run.
 8. The user asks for a topic, hypothesis, scope, or factor change.
 
 ---
@@ -367,8 +363,8 @@ Stop, surface the question, do not improvise if any of the following occur:
 ## Open questions to resolve before Phase 1.1.3
 
 - [x] ~~SOC enumeration~~ → resolved 2026-04-28: design v2 (`v0.1a-design-v2`) replaces 8 informal occupations with 18 SOCs in `config/occupations.toml` (3×3×2 panel). `proposal_final_A.tex` §4 references the panel structure; the authoritative SOC list is the TOML config.
-- [x] ~~Anthropic / OpenAI frontier models~~ → resolved: dropped from roster for cost reasons; replaced with Zhipu GLM 5.1 + GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B (Groq).
-- [x] ~~`.md` twin sync~~ → resolved: synced to de-budgeted, four-model `.tex` in this session; pdflatex two-pass clean, 9 pages, aux files removed.
+- [x] ~~Anthropic / OpenAI frontier models~~ → resolved: dropped from roster for cost reasons; replaced with Zhipu GLM 5.1 + GLM 4.5 (single-vendor 2-model panel locked at v0.5b after free-tier coarseness diagnostics).
+- [x] ~~`.md` twin sync~~ → resolved at v0.5b: synced to two-model single-vendor `.tex`; pdflatex two-pass clean.
 
 ---
 

@@ -21,36 +21,42 @@ from pydantic import BaseModel, ConfigDict, Field
 SCORING_SYSTEM_PROMPT: Final[str] = (
     "You are an experienced first-pass resume screener for a hiring "
     "manager. Your task is to read the job description and the candidate's "
-    "resume and assign a single hiring score on the scale 0 to 100. Use the "
-    "full range and reserve high scores for genuinely strong matches.\n"
+    "resume and assign a single hiring score on the continuous scale 0.0 "
+    "to 100.0. Use the full range and reserve high scores for genuinely "
+    "strong matches.\n"
     "\n"
     "Calibration anchors — apply these consistently:\n"
-    "  0-15:  Clearly unsuitable. Missing nearly all required skills, no "
-    "relevant experience, or wrong field entirely.\n"
-    "  16-35: Weak fit. Some transferable skills but missing several core "
-    "requirements; would not normally pass first-pass screening.\n"
-    "  36-55: Moderate fit. Meets some core requirements; an average "
+    "  0.0-15.0:   Clearly unsuitable. Missing nearly all required skills, "
+    "no relevant experience, or wrong field entirely.\n"
+    "  15.1-35.0:  Weak fit. Some transferable skills but missing several "
+    "core requirements; would not normally pass first-pass screening.\n"
+    "  35.1-55.0:  Moderate fit. Meets some core requirements; an average "
     "applicant for this kind of role; would pass screening only if the "
     "candidate pool is shallow.\n"
-    "  56-70: Solid fit. Meets all core requirements with some standout "
-    "features (relevant tenure, named credentials, or domain depth). The "
-    "typical strong candidate the recruiter would forward to the hiring "
-    "manager.\n"
-    "  71-85: Strong fit. Substantially exceeds the requirements on at "
-    "least two dimensions (e.g. seniority and credentials, or breadth and "
-    "depth).\n"
-    "  86-95: Exceptional fit. Top decile candidate for this kind of role.\n"
-    "  96-100: Perfect match. Reserved for very rare cases; do not award "
-    "lightly.\n"
+    "  55.1-70.0:  Solid fit. Meets all core requirements with some "
+    "standout features (relevant tenure, named credentials, or domain "
+    "depth). The typical strong candidate the recruiter would forward to "
+    "the hiring manager.\n"
+    "  70.1-85.0:  Strong fit. Substantially exceeds the requirements on "
+    "at least two dimensions (e.g. seniority and credentials, or breadth "
+    "and depth).\n"
+    "  85.1-95.0:  Exceptional fit. Top decile candidate for this kind of "
+    "role.\n"
+    "  95.1-100.0: Perfect match. Reserved for very rare cases; do not "
+    "award lightly.\n"
     "\n"
     "Use only the information that appears in the resume and the job "
     "description. Do not infer facts that are not stated. Distinguish "
     "candidates from each other by relative strength on the explicit "
-    "evidence — avoid clustering scores at any single value. Return your "
-    "answer as a single JSON object with two keys: hiring_score (an integer "
-    "between 0 and 100, inclusive) and rationale (a brief one-paragraph "
-    "explanation of the score). Do not return any text outside of the JSON "
-    "object."
+    "evidence — avoid clustering scores at any single value, and avoid "
+    "snapping to round numbers like 80, 85, or 90. Score with at least "
+    "one decimal place of precision (e.g. 73.5, 64.2, 91.8) so that "
+    "small differences in qualifications produce small differences in "
+    "score. Return your answer as a single JSON object with two keys: "
+    "hiring_score (a number between 0.0 and 100.0, inclusive, with at "
+    "least one decimal place) and rationale (a brief one-paragraph "
+    "explanation of the score). Do not return any text outside of the "
+    "JSON object."
 )
 
 
@@ -58,10 +64,14 @@ SCORING_RESPONSE_JSON_SCHEMA: Final[dict[str, Any]] = {
     "type": "object",
     "properties": {
         "hiring_score": {
-            "type": "integer",
+            "type": "number",
             "minimum": 0,
             "maximum": 100,
-            "description": "Hiring fit score for the candidate, 0 to 100.",
+            "description": (
+                "Hiring fit score for the candidate, 0.0 to 100.0, with at "
+                "least one decimal place (e.g. 73.5). Use the full continuous "
+                "range; do not snap to multiples of 5 or 10."
+            ),
         },
         "rationale": {
             "type": "string",
@@ -78,7 +88,7 @@ class ScoringResponse(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    hiring_score: int = Field(ge=0, le=100)
+    hiring_score: float = Field(ge=0.0, le=100.0)
     rationale: str = Field(min_length=1)
 
 

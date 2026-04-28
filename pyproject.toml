@@ -37,10 +37,8 @@ dependencies = [
   "Faker>=24.0",
   "Jinja2>=3.1",
 
-  # LLM SDKs (four-provider roster: Zhipu, Google AI Studio, Groq)
+  # LLM SDK (single-vendor roster: Zhipu paid API — GLM 5.1 + GLM 4.5)
   "zhipuai>=2.1",
-  "google-generativeai>=0.8",
-  "groq>=0.11",
 
   # Statistics / causal inference
   "statsmodels>=0.14",
@@ -130,8 +128,6 @@ files = ["src", "tests"]
 [[tool.mypy.overrides]]
 module = [
   "zhipuai.*",
-  "google.generativeai.*",
-  "groq.*",
   "econml.*",
   "linearmodels.*",
   "statsmodels.*",
@@ -140,8 +136,6 @@ module = [
   "pandas.*",
   "jinja2",
   "jinja2.*",
-  "google",
-  "google.*",
   "tenacity",
   "tenacity.*",
 ]
