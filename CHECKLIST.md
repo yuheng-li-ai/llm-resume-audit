@@ -194,11 +194,11 @@
 
 ## Phase 3 — Layer 3: Job descriptions
 
-- [ ] **3.1** For each of the 18 occupations, pull O*NET-SOC summary + Kaggle LinkedIn Jobs 2024 sample postings
-- [ ] **3.2** Author 3 phrasings per occupation (54 total) in `data/processed/job_descriptions.parquet` with `[occupation_soc, phrasing_id, title, summary, requirements]`
+- [x] **3.1** For each of the 18 occupations, pull O*NET-SOC summary + Kaggle LinkedIn Jobs 2024 sample postings
+- [x] **3.2** Author 3 phrasings per occupation (54 total) in `data/processed/job_descriptions.parquet` with `[occupation_soc, phrasing_id, title, summary, requirements]`
   - **AC:** human (= you) reviews 54 entries against `config/occupations.toml` before lock
   - **Risk:** phrasing leakage may signal demographics implicitly (e.g., "nurturing environment"). Lint via stop-word check.
-- [ ] **3.3** Tag `v0.3-jobs`
+- [x] **3.3** Tag `v0.3-jobs`
 
 ---
 
@@ -381,6 +381,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 | `v0.1.1-onet` | 1.1 | 2026-04-28 | commit `1112cf2`; OnetLoader class (lazy+cached), 21 new tests across `test_onet_loader.py` (14) + `test_occupations_config.py` (7); all 18 SOCs resolve in O*NET 28.1 with canonical titles; coverage 96.77% on `onet_loader.py` |
 | `v0.1-resumes` | 1.2 + 1.3 | 2026-04-28 | ResumeFactory (OOP, deterministic per-id RNG, Jinja2-rendered) + Pydantic frozen Resume schema + SeedConfig + OccupationsConfig; 450-row base_resumes.parquet (25/SOC × 18, mean body 1,725 chars, median 1,674, max 2,809; no LLM-stamp phrases); snapshot tests on résumé #0 and #449; 71 tests, coverage 93.39% |
 | `v0.2a-names` | 2.1-2.4 | 2026-04-28 | NameCorpus class (Strategy α: surname-driven ethnicity, hardcoded SSA first names with citation, IP-blocked SSA download path documented); 32-row name_corpus.parquet (8 cells × 4 first×1 last, posteriors Olson 0.95 / Garcia 0.92 / Nguyen 0.96 / Washington 0.88); Black-cell threshold relaxed to 0.85, exception documented in proposal §12 caveat 3; .tex+.md cascaded, pdflatex 10 pages clean; 20 NameCorpus tests, 91 total, coverage ≥80% |
+| `v0.3-jobs` | 3.1-3.3 | 2026-04-28 | JobDescriptions class (P-template architecture: hand-authored Jinja2-style templates over O*NET canonical fields, ZERO LLM in build path); 54-row job_descriptions.parquet (18 SOCs × 3 phrasings); blocking demographic-signal lint (16 dog-whistle terms, build raises on violation, all 54 rows clean); Tier-2 SOC proxy mapping (15-1252.00→15-1251.00, 13-2051.00→13-2099.01) for Skills/Knowledge ratings, Title+Description from locked Tier-2 SOC; .tex+.md proxy note added in §5; 14 new tests, 105 total, coverage 93.96% |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
