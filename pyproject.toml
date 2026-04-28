@@ -140,6 +140,10 @@ module = [
   "pandas.*",
   "jinja2",
   "jinja2.*",
+  "google",
+  "google.*",
+  "tenacity",
+  "tenacity.*",
 ]
 ignore_missing_imports = true
 

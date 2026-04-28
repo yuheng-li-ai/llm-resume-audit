@@ -1,0 +1,109 @@
+"""Canonical scoring prompt + structured-output schema (Phase 5.1).
+
+Per proposal §12 we keep the system prompt deliberately neutral: no
+treatment labels, no "be unbiased" framing, no demographic vocabulary.
+The screener is asked to do the same job a real first-pass HR reviewer
+does and return a single integer score plus a one-paragraph rationale.
+
+Per proposal §5 the prompt design is split into a static prefix
+(SCORING_SYSTEM_PROMPT plus the job_description) and a dynamic suffix
+(resume_text), so providers that support prompt caching can cache
+the prefix.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any, Final
+
+from pydantic import BaseModel, ConfigDict, Field
+
+SCORING_SYSTEM_PROMPT: Final[str] = (
+    "You are an experienced first-pass resume screener for a hiring "
+    "manager. Your task is to read the job description and the candidate's "
+    "resume and assign a single hiring score on the scale 0 to 100. Use the "
+    "full range and reserve high scores for genuinely strong matches.\n"
+    "\n"
+    "Calibration anchors — apply these consistently:\n"
+    "  0-15:  Clearly unsuitable. Missing nearly all required skills, no "
+    "relevant experience, or wrong field entirely.\n"
+    "  16-35: Weak fit. Some transferable skills but missing several core "
+    "requirements; would not normally pass first-pass screening.\n"
+    "  36-55: Moderate fit. Meets some core requirements; an average "
+    "applicant for this kind of role; would pass screening only if the "
+    "candidate pool is shallow.\n"
+    "  56-70: Solid fit. Meets all core requirements with some standout "
+    "features (relevant tenure, named credentials, or domain depth). The "
+    "typical strong candidate the recruiter would forward to the hiring "
+    "manager.\n"
+    "  71-85: Strong fit. Substantially exceeds the requirements on at "
+    "least two dimensions (e.g. seniority and credentials, or breadth and "
+    "depth).\n"
+    "  86-95: Exceptional fit. Top decile candidate for this kind of role.\n"
+    "  96-100: Perfect match. Reserved for very rare cases; do not award "
+    "lightly.\n"
+    "\n"
+    "Use only the information that appears in the resume and the job "
+    "description. Do not infer facts that are not stated. Distinguish "
+    "candidates from each other by relative strength on the explicit "
+    "evidence — avoid clustering scores at any single value. Return your "
+    "answer as a single JSON object with two keys: hiring_score (an integer "
+    "between 0 and 100, inclusive) and rationale (a brief one-paragraph "
+    "explanation of the score). Do not return any text outside of the JSON "
+    "object."
+)
+
+
+SCORING_RESPONSE_JSON_SCHEMA: Final[dict[str, Any]] = {
+    "type": "object",
+    "properties": {
+        "hiring_score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100,
+            "description": "Hiring fit score for the candidate, 0 to 100.",
+        },
+        "rationale": {
+            "type": "string",
+            "description": "Short paragraph explaining the score.",
+        },
+    },
+    "required": ["hiring_score", "rationale"],
+    "additionalProperties": False,
+}
+
+
+class ScoringResponse(BaseModel):
+    """Validated structured response from a scoring client."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    hiring_score: int = Field(ge=0, le=100)
+    rationale: str = Field(min_length=1)
+
+
+@dataclass(frozen=True)
+class ScoringPrompt:
+    """Combine job description + résumé into the user-message text.
+
+    Layout (fixed to enable provider-side prompt caching of the static
+    prefix):
+        JOB DESCRIPTION
+        <job_description>
+        ----
+        CANDIDATE RESUME
+        <resume_text>
+    """
+
+    job_description: str
+    resume_text: str
+
+    @property
+    def user_message(self) -> str:
+        return (
+            "JOB DESCRIPTION\n"
+            f"{self.job_description}\n"
+            "----\n"
+            "CANDIDATE RESUME\n"
+            f"{self.resume_text}"
+        )

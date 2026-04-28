@@ -226,27 +226,27 @@
 > Goal: ~8,000 cells × 4 models = ~32,000 scores, with prompt caching, free-tier rate-limit pacing, calibration injection, and a real cost tracker. Funded by the user's existing ¥100 Zhipu balance (projected spend ¥60-80) plus Google AI Studio and Groq free tiers — no API top-ups required.
 
 ### 5.1 Prompt construction
-- [ ] **5.1.1** Author `utils/prompts.py` with a single canonical scoring prompt (system + user). System prompt **must not name treatments** (per limitation §12).
-- [ ] **5.1.2** Static portion (system + job description) goes in cache-eligible prefix; dynamic portion (résumé body) trails. Zhipu and Gemini both support prompt caching; Groq does not.
-- [ ] **5.1.3** Pilot prompt against a single GLM-4 Flash call (cheapest provider) manually before scaling. Inspect output JSON shape.
+- [x] **5.1.1** Author `utils/prompts.py` with a single canonical scoring prompt (system + user). System prompt **must not name treatments** (per limitation §12).
+- [x] **5.1.2** Static portion (system + job description) goes in cache-eligible prefix; dynamic portion (résumé body) trails. Zhipu and Gemini both support prompt caching; Groq does not.
+- [x] **5.1.3** Pilot prompt against a single GLM-4 Flash call (cheapest provider) manually before scaling. Inspect output JSON shape.
   - **AC:** model returns `{"hiring_score": float in [0,100], "rationale": str}` parseable on the first try
   - **Risk:** model returns prose-only response; need structured-output mode (Zhipu function calling, Gemini `response_schema`, Groq JSON mode)
 
 ### 5.2 Per-provider clients
-- [ ] **5.2.1** `zhipu_client.py` — synchronous calls to GLM 5.1 and GLM-4 Flash via `zhipuai` SDK; structured output via tool/function call; prompt caching enabled on system prefix
-- [ ] **5.2.2** `gemini_client.py` — synchronous calls to Gemini 2.5 Flash via `google-generativeai`; `response_schema` for JSON mode; respect free-tier limits (15 RPM, 1500 RPD)
-- [ ] **5.2.3** `groq_client.py` — synchronous calls to Llama 3.3 70B via `groq` SDK; JSON-mode response; respect free-tier limits (30 RPM and ~500K tokens/day)
+- [x] **5.2.1** `zhipu_client.py` — synchronous calls to GLM 5.1 and GLM-4 Flash via `zhipuai` SDK; structured output via tool/function call; prompt caching enabled on system prefix
+- [x] **5.2.2** `gemini_client.py` — synchronous calls to Gemini 2.5 Flash via `google-generativeai`; `response_schema` for JSON mode; respect free-tier limits (15 RPM, 1500 RPD)
+- [x] **5.2.3** `groq_client.py` — synchronous calls to Llama 3.3 70B via `groq` SDK; JSON-mode response; respect free-tier limits (30 RPM and ~500K tokens/day)
   - **AC each:** integration test submits 5 cells, retrieves parseable scores, no raw API key in logs
   - **Risk:** SDK version drift; pin in `pyproject.toml`. Groq daily token cap is the binding constraint (see 5.5 wall-clock estimate).
 
 ### 5.3 Batch runner
-- [ ] **5.3.1** `batch_runner.py` orchestrating per-provider submission, polling, retry-with-exponential-backoff, dedupe on `(cell_id, model_id)`. Per-provider rate-limiter enforces free-tier RPM/RPD/daily-token caps in-process.
-- [ ] **5.3.2** Calibration résumé injection every 100 cells (one extreme-strong, one extreme-weak) per proposal §5 / §7
-- [ ] **5.3.3** Cost tracker logs ¥/$ per provider and writes `data/audit/cost_log.csv` with header `provider,batch_id,cells,tokens_in,tokens_out,cost_local,currency,timestamp` (timestamp ISO-8601 UTC)
+- [x] **5.3.1** `batch_runner.py` orchestrating per-provider submission, polling, retry-with-exponential-backoff, dedupe on `(cell_id, model_id)`. Per-provider rate-limiter enforces free-tier RPM/RPD/daily-token caps in-process.
+- [x] **5.3.2** Calibration résumé injection every 100 cells (one extreme-strong, one extreme-weak) per proposal §5 / §7
+- [x] **5.3.3** Cost tracker logs ¥/$ per provider and writes `data/audit/cost_log.csv` with header `provider,batch_id,cells,tokens_in,tokens_out,cost_local,currency,timestamp` (timestamp ISO-8601 UTC)
   - **AC:** running 100-cell pilot reports cost spent within ±20% of forward estimate; no key leaked
 
 ### 5.4 Pilot run (100 cells, 1 model)
-- [ ] **5.4.1** Execute pilot on GLM-4 Flash (cheapest); inspect score distribution, parse-failure rate, latency
+- [x] **5.4.1** Execute pilot on GLM-4 Flash (cheapest); inspect score distribution, parse-failure rate, latency
   - **AC:** parse success ≥ 99%; score variance > 0; no NaNs
   - **Risk:** model refuses to score résumés on ethical grounds → escalate prompt-engineering decision; **stop and ask**
 
@@ -383,6 +383,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 | `v0.2a-names` | 2.1-2.4 | 2026-04-28 | NameCorpus class (Strategy α: surname-driven ethnicity, hardcoded SSA first names with citation, IP-blocked SSA download path documented); 32-row name_corpus.parquet (8 cells × 4 first×1 last, posteriors Olson 0.95 / Garcia 0.92 / Nguyen 0.96 / Washington 0.88); Black-cell threshold relaxed to 0.85, exception documented in proposal §12 caveat 3; .tex+.md cascaded, pdflatex 10 pages clean; 20 NameCorpus tests, 91 total, coverage ≥80% |
 | `v0.3-jobs` | 3.1-3.3 | 2026-04-28 | JobDescriptions class (P-template architecture: hand-authored Jinja2-style templates over O*NET canonical fields, ZERO LLM in build path); 54-row job_descriptions.parquet (18 SOCs × 3 phrasings); blocking demographic-signal lint (16 dog-whistle terms, build raises on violation, all 54 rows clean); Tier-2 SOC proxy mapping (15-1252.00→15-1251.00, 13-2051.00→13-2099.01) for Skills/Knowledge ratings, Title+Description from locked Tier-2 SOC; .tex+.md proxy note added in §5; 14 new tests, 105 total, coverage 93.96% |
 | `v0.4-treatments` | 4.1-4.5 | 2026-04-28 | TreatmentInjector class (re-runs ResumeFactory with t_p override; deterministic name+contact swap from name_corpus.parquet) + Stratifier class (450×48=21,600 enumeration, 9-rep × 864 micro-cell base + 224 s_signal=False oversample → exactly 8,000 cells); treatment_assignments.parquet (8,000 rows × 8 cols, 1.90 MB, prompt mean 1747 chars / median 1693); 8-check dry-run validation all PASS (48 demographic cells, 9 reps/micro, gender/ethnicity name match, t_p year coherence, s_signal toggle, no `<<...>>` leaks, length sane, ZERO LLM imports); model_id deferred to Phase 5 (cell × model expansion); 25 new tests, 130 total, coverage 94.26% |
+| `v0.5a-pilot` | 5.1-5.4 | 2026-04-28 | Phase 5 setup + 100-cell GLM 5 pilot. Canonical SCORING_SYSTEM_PROMPT with calibration anchors (0-15 / 16-35 / 36-55 / 56-70 / 71-85 / 86-95 / 96-100); ScoringClient ABC + ZhipuClient/GeminiClient/GroqClient (Pydantic-validated, markdown-fence + tool-envelope parser fallbacks); BatchRunner with tenacity retry, per-provider RPM limiter, dedup, CostTracker → cost_log.csv. **Pilot AC PASS:** 100/100 valid (100%), 24 unique scores, mean 81.19 / median 82 / std 11.10, range 42-98, 0 NaN, RMB 2.32 actual. GLM-4 Flash 3-value collapse → demoted to robustness sweep only; GLM 5 adopted as main Zhipu path. Proposal §5 budget updated: RMB 300 balance / RMB ~195 spend (per RMB 0.024/call). 166 tests, coverage 80.14% |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
