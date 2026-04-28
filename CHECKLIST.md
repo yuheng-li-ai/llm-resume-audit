@@ -378,6 +378,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 |---|---|---|---|
 | `v0.0-scaffold` | 0 | 2026-04-28 | commit `e7ed380`; `make test` 2 passed, cov 100% (0 stmts); pre-commit hooks all green |
 | `v0.1a-design-v2` | 0.5+ (design lock revision) | 2026-04-28 | commit `2e4a2fa`; 8 → 18 occupations (3×3×2), N≈8,000, ~9 reps/cell; .tex+.md cascaded, pdflatex two-pass clean (9 pages, 364,227 B) |
+| `v0.1.1-onet` | 1.1 | 2026-04-28 | commit `1112cf2`; OnetLoader class (lazy+cached), 21 new tests across `test_onet_loader.py` (14) + `test_occupations_config.py` (7); all 18 SOCs resolve in O*NET 28.1 with canonical titles; coverage 96.77% on `onet_loader.py` |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
