@@ -206,18 +206,18 @@
 
 > Goal: deterministic factorial enumeration + ~8,000-cell stratified subsample.
 
-- [ ] **4.1** Implement `treatment_injector.inject(resume: Resume, t_g, t_e, t_p, s_signal) -> str`
+- [x] **4.1** Implement `treatment_injector.inject(resume: Resume, t_g, t_e, t_p, s_signal) -> str`
   - Replace `<<NAME>>` token with `(first_name, last_name)` from chosen `(t_g, t_e)` cell
   - Inject `T_p` age signal (early-career → graduation year shift; mid-career → 15 yrs exp; late-career → 25 yrs exp)
   - Inject objective qualification block on `s_signal=True` (numeric GPA, certification IDs, percentile test scores); strip on `False`
   - **AC:** round-trip property test — recovering `(t_g, t_e, t_p, s_signal)` from injected résumé matches input
 
-- [ ] **4.2** Implement factorial enumerator producing all 450 × 48 = 21,600 cells, deterministic seeded order
-- [ ] **4.3** Implement stratified ~8,000-cell subsampler: uniform over the 48 demographic cells with slight oversample on `s_signal=False`, AND uniform over the 18 occupations with each (stereotype × tier) cell receiving equal weight per design v2
+- [x] **4.2** Implement factorial enumerator producing all 450 × 48 = 21,600 cells, deterministic seeded order
+- [x] **4.3** Implement stratified ~8,000-cell subsampler: uniform over the 48 demographic cells with slight oversample on `s_signal=False`, AND uniform over the 18 occupations with each (stereotype × tier) cell receiving equal weight per design v2
   - **AC:** subsample distribution matches the design doc within ±2% per (occupation × demographic) micro-cell; ~9 replicates per micro-cell
 
-- [ ] **4.4** Persist `data/processed/treatment_assignments.parquet` with `[cell_id, resume_id, t_g, t_e, t_p, s_signal, occupation_soc, model_id, prompt_text]`
-- [ ] **4.5** Tag `v0.4-treatments`
+- [x] **4.4** Persist `data/processed/treatment_assignments.parquet` with `[cell_id, resume_id, t_g, t_e, t_p, s_signal, occupation_soc, model_id, prompt_text]`
+- [x] **4.5** Tag `v0.4-treatments`
 
 ---
 
@@ -382,6 +382,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 | `v0.1-resumes` | 1.2 + 1.3 | 2026-04-28 | ResumeFactory (OOP, deterministic per-id RNG, Jinja2-rendered) + Pydantic frozen Resume schema + SeedConfig + OccupationsConfig; 450-row base_resumes.parquet (25/SOC × 18, mean body 1,725 chars, median 1,674, max 2,809; no LLM-stamp phrases); snapshot tests on résumé #0 and #449; 71 tests, coverage 93.39% |
 | `v0.2a-names` | 2.1-2.4 | 2026-04-28 | NameCorpus class (Strategy α: surname-driven ethnicity, hardcoded SSA first names with citation, IP-blocked SSA download path documented); 32-row name_corpus.parquet (8 cells × 4 first×1 last, posteriors Olson 0.95 / Garcia 0.92 / Nguyen 0.96 / Washington 0.88); Black-cell threshold relaxed to 0.85, exception documented in proposal §12 caveat 3; .tex+.md cascaded, pdflatex 10 pages clean; 20 NameCorpus tests, 91 total, coverage ≥80% |
 | `v0.3-jobs` | 3.1-3.3 | 2026-04-28 | JobDescriptions class (P-template architecture: hand-authored Jinja2-style templates over O*NET canonical fields, ZERO LLM in build path); 54-row job_descriptions.parquet (18 SOCs × 3 phrasings); blocking demographic-signal lint (16 dog-whistle terms, build raises on violation, all 54 rows clean); Tier-2 SOC proxy mapping (15-1252.00→15-1251.00, 13-2051.00→13-2099.01) for Skills/Knowledge ratings, Title+Description from locked Tier-2 SOC; .tex+.md proxy note added in §5; 14 new tests, 105 total, coverage 93.96% |
+| `v0.4-treatments` | 4.1-4.5 | 2026-04-28 | TreatmentInjector class (re-runs ResumeFactory with t_p override; deterministic name+contact swap from name_corpus.parquet) + Stratifier class (450×48=21,600 enumeration, 9-rep × 864 micro-cell base + 224 s_signal=False oversample → exactly 8,000 cells); treatment_assignments.parquet (8,000 rows × 8 cols, 1.90 MB, prompt mean 1747 chars / median 1693); 8-check dry-run validation all PASS (48 demographic cells, 9 reps/micro, gender/ethnicity name match, t_p year coherence, s_signal toggle, no `<<...>>` leaks, length sane, ZERO LLM imports); model_id deferred to Phase 5 (cell × model expansion); 25 new tests, 130 total, coverage 94.26% |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
