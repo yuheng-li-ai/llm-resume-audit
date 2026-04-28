@@ -139,7 +139,7 @@
 
 ## Phase 1 — Layer 1: Résumé factory
 
-> Goal: 200 base templated résumés anchored on O*NET 28.1 task taxonomies. **No LLM-written prose** (per `proposal_final_A.tex` §5).
+> Goal: ~450 base templated résumés (~25 per occupation × 18 occupations) anchored on O*NET 28.1 task taxonomies. **No LLM-written prose** (per `proposal_final_A.tex` §5).
 
 ### 1.1 O*NET ingestion
 - [ ] **1.1.1** Download O*NET Database 28.1 release bundle (`https://www.onetcenter.org/database.html` — confirm URL still live before fetch)
@@ -150,19 +150,19 @@
 - [ ] **1.1.2** Author `src/llm_audit/onet_loader.py` to parse Task Statements + Occupation Data into a typed `pandas.DataFrame`
   - **AC:** unit test loads the bundle, asserts ≥1,000 occupations and ≥18,000 tasks (current O*NET 28.1 ground truth)
 
-- [ ] **1.1.3** Filter to the eight occupations in `proposal_final_A.tex` §4 (locked list — extract verbatim from proposal; do **not** invent codes). If the proposal does not name all eight by SOC code, **stop and ask** before proceeding.
+- [ ] **1.1.3** Filter to the eighteen occupations in `config/occupations.toml` (locked 3×3×2 panel — see CHECKLIST rule 4). Verification test asserts every TOML SOC resolves to a non-empty O*NET row; if any miss, **stop and ask** before substituting a sibling SOC.
 
 ### 1.2 Faker + Jinja2 templating
 - [ ] **1.2.1** Define résumé schema in `src/llm_audit/schema.py` using Pydantic v2: `Resume(name, contact, education[], experience[], skills[], certifications[], objective_signals?)`
 - [ ] **1.2.2** Build Jinja2 template `templates/resume.j2` producing plain-text résumés (no Markdown, no LLM-style flourishes)
 - [ ] **1.2.3** Implement `resume_factory.build_resumes(n: int, seed: int) -> list[Resume]` that, per occupation, samples task statements, years of experience (5/15/25 brackets matching `T_p` levels), and education tier
-- [ ] **1.2.4** Generate 200 base résumés (25 per occupation × 8); persist to `data/processed/base_resumes.parquet` with columns `[resume_id, occupation_soc, years_exp_bracket, education_tier, body_text]`
-  - **AC:** parquet has exactly 200 rows; `body_text.str.len().mean()` between 1,500 and 3,500 chars; **no row contains substrings `"As an AI"`, `"In conclusion"`, or other LLM-stamp phrases** (regression test)
+- [ ] **1.2.4** Generate ~450 base résumés (25 per occupation × 18); persist to `data/processed/base_resumes.parquet` with columns `[resume_id, occupation_soc, years_exp_bracket, education_tier, body_text]`
+  - **AC:** parquet has exactly 450 rows (25 × 18, exact); `body_text.str.len().mean()` between 1,500 and 3,500 chars; **no row contains substrings `"As an AI"`, `"In conclusion"`, or other LLM-stamp phrases** (regression test)
   - **Risk:** Faker locale defaulting to `en_US` may seed names that conflict with Phase 2 demographic name corpus; use placeholder `"<<NAME>>"` token in body_text
   - **Rollback:** delete the parquet, fix template, regenerate with same seed
 
 ### 1.3 Snapshot test
-- [ ] **1.3.1** Add `tests/test_resume_factory.py` snapshotting résumé #0 and #199 byte-for-byte
+- [ ] **1.3.1** Add `tests/test_resume_factory.py` snapshotting résumé #0 and #449 byte-for-byte
 - [ ] **1.3.2** Tag `v0.1-resumes`
 
 ---
@@ -194,9 +194,9 @@
 
 ## Phase 3 — Layer 3: Job descriptions
 
-- [ ] **3.1** For each of the 8 occupations, pull O*NET-SOC summary + Kaggle LinkedIn Jobs 2024 sample postings
-- [ ] **3.2** Author 3 phrasings per occupation (24 total) in `data/processed/job_descriptions.parquet` with `[occupation_soc, phrasing_id, title, summary, requirements]`
-  - **AC:** human (= you) reviews 24 entries against `proposal_final_A.tex` §5 occupation list before lock
+- [ ] **3.1** For each of the 18 occupations, pull O*NET-SOC summary + Kaggle LinkedIn Jobs 2024 sample postings
+- [ ] **3.2** Author 3 phrasings per occupation (54 total) in `data/processed/job_descriptions.parquet` with `[occupation_soc, phrasing_id, title, summary, requirements]`
+  - **AC:** human (= you) reviews 54 entries against `config/occupations.toml` before lock
   - **Risk:** phrasing leakage may signal demographics implicitly (e.g., "nurturing environment"). Lint via stop-word check.
 - [ ] **3.3** Tag `v0.3-jobs`
 
@@ -204,7 +204,7 @@
 
 ## Phase 4 — Treatment injection
 
-> Goal: deterministic factorial enumeration + 5,000-cell stratified subsample.
+> Goal: deterministic factorial enumeration + ~8,000-cell stratified subsample.
 
 - [ ] **4.1** Implement `treatment_injector.inject(resume: Resume, t_g, t_e, t_p, s_signal) -> str`
   - Replace `<<NAME>>` token with `(first_name, last_name)` from chosen `(t_g, t_e)` cell
@@ -212,9 +212,9 @@
   - Inject objective qualification block on `s_signal=True` (numeric GPA, certification IDs, percentile test scores); strip on `False`
   - **AC:** round-trip property test — recovering `(t_g, t_e, t_p, s_signal)` from injected résumé matches input
 
-- [ ] **4.2** Implement factorial enumerator producing all 200 × 48 = 9,600 cells, deterministic seeded order
-- [ ] **4.3** Implement stratified 5,000-cell subsampler (uniform over 48 cells, slight oversample on `s_signal=False` per proposal §4)
-  - **AC:** subsample distribution matches the design doc within ±2% per cell
+- [ ] **4.2** Implement factorial enumerator producing all 450 × 48 = 21,600 cells, deterministic seeded order
+- [ ] **4.3** Implement stratified ~8,000-cell subsampler: uniform over the 48 demographic cells with slight oversample on `s_signal=False`, AND uniform over the 18 occupations with each (stereotype × tier) cell receiving equal weight per design v2
+  - **AC:** subsample distribution matches the design doc within ±2% per (occupation × demographic) micro-cell; ~9 replicates per micro-cell
 
 - [ ] **4.4** Persist `data/processed/treatment_assignments.parquet` with `[cell_id, resume_id, t_g, t_e, t_p, s_signal, occupation_soc, model_id, prompt_text]`
 - [ ] **4.5** Tag `v0.4-treatments`
@@ -223,7 +223,7 @@
 
 ## Phase 5 — Layer 4: Multi-LLM scoring loop
 
-> Goal: 5,000 cells × 4 models = 20,000 scores, with prompt caching, free-tier rate-limit pacing, calibration injection, and a real cost tracker. Funded entirely by the user's existing ¥100 Zhipu balance plus Google AI Studio and Groq free tiers — no API top-ups required.
+> Goal: ~8,000 cells × 4 models = ~32,000 scores, with prompt caching, free-tier rate-limit pacing, calibration injection, and a real cost tracker. Funded by the user's existing ¥100 Zhipu balance (projected spend ¥60-80) plus Google AI Studio and Groq free tiers — no API top-ups required.
 
 ### 5.1 Prompt construction
 - [ ] **5.1.1** Author `utils/prompts.py` with a single canonical scoring prompt (system + user). System prompt **must not name treatments** (per limitation §12).
@@ -250,12 +250,12 @@
   - **AC:** parse success ≥ 99%; score variance > 0; no NaNs
   - **Risk:** model refuses to score résumés on ethical grounds → escalate prompt-engineering decision; **stop and ask**
 
-### 5.5 Main batch (5,000 × 4)
+### 5.5 Main batch (~8,000 × 4)
 - [ ] **5.5.1** Pre-flight: confirm OSF pre-registration is locked (Phase 6 must precede this)
 - [ ] **5.5.2** Submit per provider; persist `data/audit/scores.parquet` with `[cell_id, model_id, hiring_score, rationale, latency_ms, cost_local, currency, batch_id, retrieved_at]` (retrieved_at ISO-8601 UTC)
 - [ ] **5.5.3** Reconcile dropped/failed cells; re-submit only those (no full re-run)
   - **AC:** ≥ 99% of (cell × model) pairs have a score; failed pairs logged with reason
-- [ ] **5.5.4** Wall-clock budget: ~14 days end-to-end, dominated by Groq daily token cap (~500K tok/day; 5,000 calls × ~1,400 tok ≈ 7M tok ⇒ ~14 days). Zhipu finishes in ~1 day; Gemini free finishes in ~4 days. Gate progress per provider in the dashboard.
+- [ ] **5.5.4** Wall-clock budget: ~14-15 days end-to-end, dominated by Groq Llama 3.3 70B free-tier daily token cap (~500K tok/day). Budget per call: ~100 tok system + ~150 tok job description + ~500 tok résumé + ~100 tok output ≈ 850 tok/call typical. ~8,000 calls × ~850 tok ≈ 6.8M tok ⇒ ~14 days at the cap. **Hard constraint:** the résumé `body_text` median must stay ≤ 700 tok (~2,800 chars) or the wall-clock blows past 18 days. Phase 1.2 AC enforces 1,500-3,500 char range; verify median lands ≤ 2,800. Zhipu finishes in ~2 days; Gemini free finishes in ~6 days. Gate progress per provider in the dashboard.
 - [ ] **5.5.5** Tag `v0.5-scores-main`
 
 ---
@@ -366,7 +366,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 
 ## Open questions to resolve before Phase 1.1.3
 
-- [ ] Does `proposal_final_A.tex` §4 enumerate all 8 occupation SOC codes explicitly, or does it leave them implicit? **Read and report before downloading O*NET filtered subsets.** *(Deferred per user — revisit before Phase 1.1.3 fires.)*
+- [x] ~~SOC enumeration~~ → resolved 2026-04-28: design v2 (`v0.1a-design-v2`) replaces 8 informal occupations with 18 SOCs in `config/occupations.toml` (3×3×2 panel). `proposal_final_A.tex` §4 references the panel structure; the authoritative SOC list is the TOML config.
 - [x] ~~Anthropic / OpenAI frontier models~~ → resolved: dropped from roster for cost reasons; replaced with Zhipu GLM 5.1 + GLM-4 Flash, Gemini 2.5 Flash, Llama 3.3 70B (Groq).
 - [x] ~~`.md` twin sync~~ → resolved: synced to de-budgeted, four-model `.tex` in this session; pdflatex two-pass clean, 9 pages, aux files removed.
 
