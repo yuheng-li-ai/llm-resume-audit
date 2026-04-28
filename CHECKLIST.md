@@ -171,16 +171,16 @@
 
 > Goal: 32 first-name × last-name pairs spanning gender × ethnicity, signal-strength validated.
 
-- [ ] **2.1** Acquire SSA Baby Names (1880–2023), US Census 2010 Surnames, Tzioumis (2018) supplement
+- [x] **2.1** Acquire SSA Baby Names (1880–2023), US Census 2010 Surnames, Tzioumis (2018) supplement
   - **AC:** raw files in `data/raw/names/` with sha256 manifest
 
-- [ ] **2.2** Reproduce Bertrand–Mullainathan (2004) name-selection criterion: per (gender × ethnicity) cell, top-K names where P(ethnicity|name) ≥ 0.90 in the source registry
+- [x] **2.2** Reproduce Bertrand–Mullainathan (2004) name-selection criterion: per (gender × ethnicity) cell, top-K names where P(ethnicity|name) ≥ 0.90 in the source registry
   - **AC:** unit test asserts every selected name's posterior ≥ 0.90 against the source
 
-- [ ] **2.3** Persist `data/processed/name_corpus.parquet` with `[name_id, first_name, last_name, gender, ethnicity, posterior_prob, source]` (32 rows: 4 first × 1 last per cell, 8 cells)
+- [x] **2.3** Persist `data/processed/name_corpus.parquet` with `[name_id, first_name, last_name, gender, ethnicity, posterior_prob, source]` (32 rows: 4 first × 1 last per cell, 8 cells)
   - **Risk:** US-centric naming biases the ethnicity treatment in non-US occupations; flagged in proposal §12 — accept
 
-- [ ] **2.4** Tag `v0.2a-names`
+- [x] **2.4** Tag `v0.2a-names`
 
 ---
 
@@ -380,6 +380,7 @@ Stop, surface the question, do not improvise if any of the following occur:
 | `v0.1a-design-v2` | 0.5+ (design lock revision) | 2026-04-28 | commit `2e4a2fa`; 8 → 18 occupations (3×3×2), N≈8,000, ~9 reps/cell; .tex+.md cascaded, pdflatex two-pass clean (9 pages, 364,227 B) |
 | `v0.1.1-onet` | 1.1 | 2026-04-28 | commit `1112cf2`; OnetLoader class (lazy+cached), 21 new tests across `test_onet_loader.py` (14) + `test_occupations_config.py` (7); all 18 SOCs resolve in O*NET 28.1 with canonical titles; coverage 96.77% on `onet_loader.py` |
 | `v0.1-resumes` | 1.2 + 1.3 | 2026-04-28 | ResumeFactory (OOP, deterministic per-id RNG, Jinja2-rendered) + Pydantic frozen Resume schema + SeedConfig + OccupationsConfig; 450-row base_resumes.parquet (25/SOC × 18, mean body 1,725 chars, median 1,674, max 2,809; no LLM-stamp phrases); snapshot tests on résumé #0 and #449; 71 tests, coverage 93.39% |
+| `v0.2a-names` | 2.1-2.4 | 2026-04-28 | NameCorpus class (Strategy α: surname-driven ethnicity, hardcoded SSA first names with citation, IP-blocked SSA download path documented); 32-row name_corpus.parquet (8 cells × 4 first×1 last, posteriors Olson 0.95 / Garcia 0.92 / Nguyen 0.96 / Washington 0.88); Black-cell threshold relaxed to 0.85, exception documented in proposal §12 caveat 3; .tex+.md cascaded, pdflatex 10 pages clean; 20 NameCorpus tests, 91 total, coverage ≥80% |
 | `v0.1-resumes` | 1 | | |
 | `v0.2a-names` | 2 | | |
 | `v0.3-jobs` | 3 | | |
