@@ -74,12 +74,18 @@ def _unwrap_tool_envelope(text: str) -> str:
 class ZhipuClient(ScoringClient):
     provider = "zhipu"
 
-    def __init__(self, model_id: str = "glm-4-flash", api_key: str | None = None) -> None:
+    def __init__(
+        self,
+        model_id: str = "glm-4-flash",
+        api_key: str | None = None,
+        timeout: float = 60.0,
+    ) -> None:
         key = api_key or os.environ.get("ZHIPUAI_API_KEY")
         if not key:
             raise RuntimeError("ZHIPUAI_API_KEY not set; load .env or pass api_key=...")
         self.model_id = model_id
-        self._client = ZhipuAI(api_key=key)
+        self._timeout = timeout
+        self._client = ZhipuAI(api_key=key, timeout=timeout)
 
     def score(self, prompt: ScoringPrompt, cell_id: int = 0) -> ScoringResult:
         tools = [
@@ -102,6 +108,7 @@ class ZhipuClient(ScoringClient):
             tools=cast(Any, tools),
             tool_choice=cast(Any, {"type": "function", "function": {"name": _TOOL_NAME}}),
             temperature=0.0,
+            timeout=self._timeout,
         )
         latency_ms = int((time.monotonic() - t0) * 1000)
 

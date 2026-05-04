@@ -21,6 +21,7 @@ import csv
 import logging
 import time
 import uuid
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -136,8 +137,13 @@ class BatchRunner:
         model_ids: list[str],
         scores_output_path: Path,
         cost_log_path: Path | None = None,
+        progress_cb: Callable[[], None] | None = None,
     ) -> pd.DataFrame:
-        """Score (cell, prompt) pairs against the given model_ids."""
+        """Score (cell, prompt) pairs against the given model_ids.
+
+        progress_cb: optional zero-arg callback invoked after each completed
+        API call (success or failure). Dedup-skipped pairs do NOT invoke it.
+        """
         batch_id = uuid.uuid4().hex[:12]
         existing = self._load_existing_scores(scores_output_path)
         rows: list[dict[str, Any]] = []
@@ -149,6 +155,8 @@ class BatchRunner:
                 client = self._clients[model_id]
                 row = self._score_one(client, cell, prompt, batch_id, model_id)
                 rows.append(row)
+                if progress_cb is not None:
+                    progress_cb()
 
         df = pd.DataFrame(rows)
         if existing and scores_output_path.exists():
@@ -175,7 +183,7 @@ class BatchRunner:
 
         @retry(  # type: ignore[misc]
             stop=stop_after_attempt(self._max_retries),
-            wait=wait_exponential(multiplier=2, min=2, max=30),
+            wait=wait_exponential(multiplier=2, min=4, max=120),
             retry=retry_if_exception_type(_RETRY_ON),
             reraise=True,
         )
@@ -225,7 +233,13 @@ class BatchRunner:
 
     @staticmethod
     def _load_existing_scores(path: Path) -> set[tuple[int, str]]:
+        """Return (cell_id, model_id) pairs that have a successful score.
+
+        Failed rows (hiring_score is null) are NOT included, so a re-run
+        retries them instead of treating the failure as final.
+        """
         if not path.exists():
             return set()
         df = pd.read_parquet(path)
-        return {(int(r["cell_id"]), str(r["model_id"])) for _, r in df.iterrows()}
+        ok = df[df["hiring_score"].notna()]
+        return {(int(r["cell_id"]), str(r["model_id"])) for _, r in ok.iterrows()}

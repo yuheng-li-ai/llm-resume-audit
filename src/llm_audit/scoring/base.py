@@ -25,7 +25,7 @@ class ScoringResult:
     cell_id: int
     model_id: str
     provider: str
-    hiring_score: int
+    hiring_score: float
     rationale: str
     latency_ms: int
     tokens_in: int

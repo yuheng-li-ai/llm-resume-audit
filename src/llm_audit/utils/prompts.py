@@ -54,8 +54,10 @@ SCORING_SYSTEM_PROMPT: Final[str] = (
     "small differences in qualifications produce small differences in "
     "score. Return your answer as a single JSON object with two keys: "
     "hiring_score (a number between 0.0 and 100.0, inclusive, with at "
-    "least one decimal place) and rationale (a brief one-paragraph "
-    "explanation of the score). Do not return any text outside of the "
+    "least one decimal place) and rationale (one or two short sentences, "
+    "no more than 200 characters total, naming the single most decisive "
+    "piece of evidence for the score). Do not pad the rationale, do not "
+    "list every requirement, and do not return any text outside of the "
     "JSON object."
 )
 
@@ -75,7 +77,11 @@ SCORING_RESPONSE_JSON_SCHEMA: Final[dict[str, Any]] = {
         },
         "rationale": {
             "type": "string",
-            "description": "Short paragraph explaining the score.",
+            "description": (
+                "One or two short sentences, no more than 200 characters total, "
+                "naming the single most decisive piece of evidence for the score. "
+                "Do not pad. Do not enumerate every requirement."
+            ),
         },
     },
     "required": ["hiring_score", "rationale"],
