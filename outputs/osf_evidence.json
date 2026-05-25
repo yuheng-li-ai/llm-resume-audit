@@ -1,0 +1,22 @@
+{
+  "generated_at": "2026-05-25T11:31:11Z",
+  "git_commit": "6c871c960b4166e3da65cb38a26c28e215f629d8",
+  "parquet_sha256": {
+    "data/processed/treatment_assignments.parquet": "303778d84a5f99778b3bfb307dbc5234aa6bd136f4ebfdc3e29c0990b134a54a",
+    "data/processed/base_resumes.parquet": "04110143480db387737fa35e528a50721fbf79c78846b02c0407e14e7ed935ca",
+    "data/processed/job_descriptions.parquet": "e902c468a20bf2122fa3afcd7c26beccc950dda69756a024de3830a292f20009",
+    "data/audit/scores.parquet": "3005e2cf4560219d8ad95a68839a982d3de27a18b46a431b9d4ea12c8bafdbb7"
+  },
+  "code_audit": {
+    "phase_7_1_ols": "5954fdd",
+    "phase_7_2_cate": "5fb3562",
+    "phase_7_3_mht": "4912510",
+    "phase_8_1_placebo": "6c871c9"
+  },
+  "timeline": {
+    "main_batch_collection": "2026-04-28 to 2026-05-03",
+    "analysis_implementation": "2026-05-03 to 2026-05-25",
+    "osf_lock_date": "pending — populated when user locks the pre-registration"
+  },
+  "verification": "Recompute the parquet SHA-256 values via `sha256sum <path>` after pulling the corresponding git commit; verify the values match. Any mismatch indicates post-lock modification of inputs and invalidates the pre-registration."
+}
