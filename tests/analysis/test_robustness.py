@@ -7,11 +7,15 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from llm_audit.analysis.robustness import (
     PermutationPlaceboAnalyzer,
     PermutationPlaceboConfig,
     PermutationPlaceboResult,
+    TemporalDriftAnalyzer,
+    TemporalDriftConfig,
+    TemporalDriftResult,
 )
 
 
@@ -130,3 +134,85 @@ class TestSummaryTable:
         ]
         assert len(df) == len(results)
         assert (df["n_permutations"] == cfg.n_permutations).all()
+
+
+# ----------------------------------------------------------------------
+# 8.3 Temporal-split drift check
+# ----------------------------------------------------------------------
+
+
+def _make_panel_with_timestamps(
+    beta_female: float = -2.0,
+    n_resumes: int = 50,
+    cells_per_resume: int = 8,
+    seed: int = 7,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Same as _make_panel_with_effect but adds a retrieved_at ISO column."""
+    scores, treat = _make_panel_with_effect(
+        beta_female=beta_female,
+        n_resumes=n_resumes,
+        cells_per_resume=cells_per_resume,
+        seed=seed,
+    )
+    # Assign timestamps monotonically across rows so window-splitting is deterministic.
+    base = pd.Timestamp("2026-05-01T00:00:00Z")
+    scores = scores.copy()
+    scores["retrieved_at"] = [
+        (base + pd.Timedelta(seconds=i * 30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        for i in range(len(scores))
+    ]
+    return scores, treat
+
+
+class TestTemporalDriftAnalyzerAPI:
+    def test_returns_one_result_per_window(self) -> None:
+        scores, treat = _make_panel_with_timestamps()
+        cfg = TemporalDriftConfig(n_windows=3)
+        an = TemporalDriftAnalyzer(cfg)
+        results = an.fit(scores, treat)
+        assert len(results) == 3
+        for r in results:
+            assert isinstance(r, TemporalDriftResult)
+            assert r.n_obs > 0
+            assert "coef" in r.coefficient_table.columns
+
+    def test_raises_on_missing_time_col(self) -> None:
+        scores, treat = _make_panel_with_effect(beta_female=0.0)
+        an = TemporalDriftAnalyzer()
+        with pytest.raises(ValueError, match="retrieved_at"):
+            an.fit(scores, treat)
+
+    def test_raises_on_invalid_n_windows(self) -> None:
+        with pytest.raises(ValueError, match="n_windows must be >= 2"):
+            TemporalDriftAnalyzer(TemporalDriftConfig(n_windows=1)).fit(
+                *_make_panel_with_timestamps()
+            )
+
+
+class TestComparisonTable:
+    def test_comparison_has_per_window_coef_columns(self) -> None:
+        scores, treat = _make_panel_with_timestamps()
+        cfg = TemporalDriftConfig(n_windows=2)
+        an = TemporalDriftAnalyzer(cfg)
+        results = an.fit(scores, treat)
+        cmp = an.comparison_table(results)
+        assert "name" in cmp.columns
+        assert "w1_of_2_coef" in cmp.columns
+        assert "w2_of_2_coef" in cmp.columns
+        assert "max_minus_min" in cmp.columns
+        assert (cmp["max_minus_min"] >= 0).all()
+
+
+class TestStabilityOnStationaryData:
+    def test_stable_coefs_have_small_max_minus_min(self) -> None:
+        # Same DGP across whole window -> per-window coefs should be similar
+        scores, treat = _make_panel_with_timestamps(beta_female=-2.0)
+        cfg = TemporalDriftConfig(n_windows=2)
+        an = TemporalDriftAnalyzer(cfg)
+        results = an.fit(scores, treat)
+        cmp = an.comparison_table(results)
+        female_row = cmp.loc[cmp["name"].str.contains("female", regex=False)].iloc[0]
+        # Two estimates of the same beta_female should agree within ~2 SD
+        assert (
+            female_row["max_minus_min"] < 2.0
+        ), f"female max-min spread {female_row['max_minus_min']:.3f} too large for stationary DGP"

@@ -13,6 +13,18 @@ The shuffle is within-cluster so the cluster structure (resume_id ->
 fixed years_exp, education, occupation) is preserved; only the demographic
 treatment labels are randomized, breaking the score-treatment link
 without disturbing the rest of the design.
+
+8.3 Temporal-split drift check (proposal §7-3, substitute)
+----------------------------------------------------------
+Split the score parquet into N equal-size time windows by the
+`retrieved_at` ISO-8601 timestamp, refit OLS demographic coefficients
+in each window, and compare coefficient stability across windows. If a
+demographic coefficient shifts materially across windows (more than a
+within-window SE), it flags vendor-side model behaviour change during
+the collection window. The CHECKLIST originally specified weekly
+calibration-résumé re-scores; that design assumed calibration cells
+were injected during the main batch (they were not), so the temporal
+split serves as the substantive substitute on the actual instrument.
 """
 
 from __future__ import annotations
@@ -134,3 +146,85 @@ class PermutationPlaceboAnalyzer:
                 "n_permutations",
             ],
         )
+
+
+# ----------------------------------------------------------------------
+# 8.3 Temporal-split drift check
+# ----------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class TemporalDriftConfig:
+    """Configuration for the temporal-split drift check."""
+
+    n_windows: int = 2
+    time_col: str = "retrieved_at"
+
+
+@dataclass(frozen=True)
+class TemporalDriftResult:
+    """OLS coefficient table for one time window."""
+
+    window_label: str
+    window_start: str
+    window_end: str
+    n_obs: int
+    coefficient_table: pd.DataFrame  # demographic_table() output
+
+
+class TemporalDriftAnalyzer:
+    """Refit OLS demographic coefficients per time window and compare."""
+
+    def __init__(self, config: TemporalDriftConfig | None = None) -> None:
+        self._config = config or TemporalDriftConfig()
+
+    @property
+    def config(self) -> TemporalDriftConfig:
+        return self._config
+
+    def fit(self, scores: pd.DataFrame, treatments: pd.DataFrame) -> list[TemporalDriftResult]:
+        cfg = self._config
+        if cfg.time_col not in scores.columns:
+            raise ValueError(
+                f"scores must contain `{cfg.time_col}` column; have {list(scores.columns)}"
+            )
+        if cfg.n_windows < 2:
+            raise ValueError(f"n_windows must be >= 2; got {cfg.n_windows}")
+        sorted_ts = scores[cfg.time_col].sort_values().to_numpy()
+        bins = np.quantile(
+            np.arange(len(sorted_ts)),
+            np.linspace(0.0, 1.0, cfg.n_windows + 1),
+        ).astype(int)
+        results: list[TemporalDriftResult] = []
+        for w in range(cfg.n_windows):
+            lo, hi = bins[w], bins[w + 1]
+            cutoff_lo = sorted_ts[lo]
+            cutoff_hi = sorted_ts[min(hi, len(sorted_ts) - 1)]
+            sub = scores.loc[
+                (scores[cfg.time_col] >= cutoff_lo) & (scores[cfg.time_col] <= cutoff_hi)
+            ]
+            analyzer = OLSAnalyzer()
+            analyzer.fit(sub, treatments)
+            demo = analyzer.demographic_table()
+            results.append(
+                TemporalDriftResult(
+                    window_label=f"w{w + 1}_of_{cfg.n_windows}",
+                    window_start=str(cutoff_lo),
+                    window_end=str(cutoff_hi),
+                    n_obs=int(len(sub)),
+                    coefficient_table=demo,
+                )
+            )
+        return results
+
+    def comparison_table(self, results: list[TemporalDriftResult]) -> pd.DataFrame:
+        """Wide table: rows = contrasts, cols = window coefs + max-min spread."""
+        frames: list[pd.DataFrame] = []
+        for r in results:
+            t = r.coefficient_table[["name", "coef", "se"]].copy()
+            t.columns = ["name", f"{r.window_label}_coef", f"{r.window_label}_se"]
+            frames.append(t.set_index("name"))
+        wide = pd.concat(frames, axis=1).reset_index()
+        coef_cols = [c for c in wide.columns if c.endswith("_coef")]
+        wide["max_minus_min"] = wide[coef_cols].max(axis=1) - wide[coef_cols].min(axis=1)
+        return wide
