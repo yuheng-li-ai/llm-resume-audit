@@ -101,7 +101,8 @@ ignore = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["N802", "N803"]  # allow snake_case test names with caps
+"tests/**/*.py" = ["N802", "N803", "N806"]  # allow caps in test names + math vars
+"src/llm_audit/analysis/*.py" = ["N802", "N806"]  # X / T / _encode_X — math convention
 
 # ============================================================================
 # Black — format
@@ -138,6 +139,10 @@ module = [
   "jinja2.*",
   "tenacity",
   "tenacity.*",
+  "numpy",
+  "numpy.*",
+  "matplotlib",
+  "matplotlib.*",
 ]
 ignore_missing_imports = true
 
