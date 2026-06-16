@@ -289,14 +289,18 @@
 
 ## Phase 8 — Robustness
 
-- [ ] **8.1** Permutation placebo (proposal §7-1)
+- [x] **8.1** Permutation placebo (proposal §7-1)
   - **AC:** placebo coefficient distribution centred at zero; flag if not
-- [ ] **8.2** Borda-count score-format robustness on 1,000-cell ranking sweep (§7-2)
-- [ ] **8.3** Weekly model-drift correction using calibration résumés (§7-3)
-- [ ] **8.4** Open-weight vs commercial coefficient gap (§7-4)
-- [ ] **8.5** Photo extension on 500-cell subsample with StyleGAN3 faces (§7-5)
+- [x] **8.2** Borda-count score-format robustness on 1,000-cell ranking sweep (§7-2)
+  - **AC:** realised 990 cells (198 five-candidate groups × 2 Zhipu models; occupation-stratified draw rounded to groups of 5); outputs `data/audit/borda_rankings.parquet`, `outputs/tables/borda_comparison.csv`, `outputs/figures/borda_comparison.pdf`.
+- [x] **8.3** Weekly model-drift correction using calibration résumés (§7-3)
+  - **AC:** completed as temporal-split drift check because calibration re-scores were not available in the main batch; outputs `outputs/tables/drift_temporal_split.csv`, `outputs/figures/drift_temporal.pdf`.
+- [!] **8.4** Open-weight vs commercial coefficient gap (§7-4)
+  - **Reason:** infeasible under locked single-vendor GLM 5.1 + GLM 4.5 panel; deferred with justification in `outputs/phase8_deferred.md`.
+- [!] **8.5** Photo extension on 500-cell subsample with StyleGAN3 faces (§7-5)
   - Triggers Phase 2b
   - **AC:** marginal photo coefficient reported with CI
+  - **Reason:** blocked on Phase 2b face assets and a multimodal scoring path; deferred with justification in `outputs/phase8_deferred.md`.
 
 - [ ] **8.6** Tag `v0.8-robustness`
 
@@ -304,10 +308,10 @@
 
 ## Phase 9 — Reporting and integration back into the proposal
 
-- [ ] **9.1** Generate forest plot of demographic coefficients (`outputs/figures/forest.pdf`)
+- [x] **9.1** Generate forest plot of demographic coefficients (`outputs/figures/forest.pdf`)
 - [ ] **9.2** Generate CATE heatmap occupation × model (`outputs/figures/cate_heatmap.pdf`)
-- [ ] **9.3** Author `outputs/results_summary.md` with one-line claim per hypothesis
-- [ ] **9.4** Patch `/mnt/c/Obsidian/note/Data Mining/proposal_final_A.tex` §6/§7/§8 with realised estimates **only after** code-review and security-review pass; preserve preamble tweaks (`\emergencystretch=2em`, `\hyphenpenalty=500`, `\tolerance=1500`); use Edit not Write
+- [x] **9.3** Author `outputs/results_summary.md` with one-line claim per hypothesis
+- [x] **9.4** Patch `/mnt/c/Obsidian/note/Data Mining/proposal_final_A.tex` §6/§7/§8 with realised estimates **only after** code-review and security-review pass; preserve preamble tweaks (`\emergencystretch=2em`, `\hyphenpenalty=500`, `\tolerance=1500`); use Edit not Write
   - **AC:** `pdflatex` two-pass compile clean; aux files cleaned
 - [ ] **9.5** Tag `v0.9-reported`
 - [ ] **9.6** Final `v1.0-midterm-submission` once user signs off

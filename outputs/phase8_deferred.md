@@ -3,8 +3,8 @@
 CHECKLIST Phase 8 has five sub-items. Three are executed in this codebase:
 
 - **8.1 permutation placebo** — done (commit `6c871c9`; PASS, no leak signature).
-- **8.2 Borda-count score-format robustness** — done (commit pending Phase 8.2 land).
-- **8.3 weekly model-drift correction** — done as a temporal-split robustness check (commit pending Phase 8.3 land); no calibration cells were injected during the main batch, so the original "weekly calibration résumé re-score" design is unavailable; the temporal split is the substantive substitute and reports the same diagnostic.
+- **8.2 Borda-count score-format robustness** — done. The realised sweep contains 990 cells (198 five-candidate groups × 2 Zhipu models) because the stratified draw allocates evenly across 18 occupations before rounding to five-candidate groups. It writes `data/audit/borda_rankings.parquet`, `outputs/tables/borda_comparison.csv`, and `outputs/figures/borda_comparison.pdf`.
+- **8.3 weekly model-drift correction** — done as a temporal-split robustness check; no calibration cells were injected during the main batch, so the original "weekly calibration résumé re-score" design is unavailable; the temporal split is the substantive substitute and reports the same diagnostic.
 
 Two sub-items are deferred with explicit justification:
 
@@ -27,4 +27,4 @@ This is a v2 / final-paper extension, not a midterm item. Proposal §10 already 
 
 ## Net effect on the midterm
 
-Phase 8 reports 3 of 5 sub-items as **executed and committed** (8.1 placebo, 8.2 Borda, 8.3 temporal drift), and 2 of 5 as **deferred with justification** (8.4 infeasible, 8.5 blocked on 2b). The robustness story carried into proposal §7 + §8 rests on 8.1 + 8.2 + 8.3.
+Phase 8 reports 3 of 5 sub-items as **executed** (8.1 placebo, 8.2 Borda, 8.3 temporal drift), and 2 of 5 as **deferred with justification** (8.4 infeasible, 8.5 blocked on 2b). The robustness story carried into proposal §7 + §8 rests on 8.1 + 8.2 + 8.3.

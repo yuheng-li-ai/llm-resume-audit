@@ -27,15 +27,18 @@ htmlcov/
 # --- Notebooks ---
 .ipynb_checkpoints/
 
-# --- Project data (regenerable; may contain résumé content) ---
+# --- Project data (regenerable; may contain résumé/API content) ---
 data/raw/
 data/processed/
 data/audit/
+data/audit_server_pull/
 *.parquet
 *.feather
 
-# --- Project outputs (regenerable; final figures inline into proposal) ---
-outputs/figures/
+# --- Project outputs (mostly regenerable) ---
+outputs/figures/*
+!outputs/figures/
+!outputs/figures/forest.pdf
 outputs/tables/
 
 # --- LaTeX byproducts ---

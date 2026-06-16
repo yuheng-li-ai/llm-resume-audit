@@ -30,6 +30,7 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
+import httpx  # noqa: E402
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
@@ -109,6 +110,21 @@ class _RateLimiter:
         self._last = time.monotonic()
 
 
+def _write_checkpoint(
+    prior: pd.DataFrame, rows: list[dict[str, object]], out_path: Path
+) -> pd.DataFrame:
+    """Atomically persist current ranking rows so interrupted runs can resume."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    df_new = pd.DataFrame(rows)
+    df = pd.concat([prior, df_new], ignore_index=True)
+    if len(df) > 0:
+        df = df.drop_duplicates(["group_id", "model_id", "cell_id"], keep="last")
+    tmp_path = out_path.with_suffix(out_path.suffix + ".tmp")
+    df.to_parquet(tmp_path, index=False)
+    tmp_path.replace(out_path)
+    return df
+
+
 def _run_rankings(
     client: ZhipuAI,
     groups: list[tuple[str, list[int]]],
@@ -183,15 +199,13 @@ def _run_rankings(
                         "borda_score": float(scaled[cid]),
                     }
                 )
+            existing.update(done_keys)
+            _write_checkpoint(prior, rows, out_path)
             if n_done % 20 == 0 or n_done == n_total:
                 elapsed = time.monotonic() - started
                 eta = (elapsed / n_done * n_total - elapsed) / 60
-                print(f"  {n_done}/{n_total} calls | elapsed {elapsed/60:.1f}m | eta {eta:.1f}m")
-    df_new = pd.DataFrame(rows)
-    df = pd.concat([prior, df_new], ignore_index=True)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(out_path, index=False)
-    return df
+                print(f"  {n_done}/{n_total} calls | elapsed {elapsed / 60:.1f}m | eta {eta:.1f}m")
+    return _write_checkpoint(prior, rows, out_path)
 
 
 def _compare_coefs(
@@ -257,7 +271,9 @@ def main() -> int:
     if not api_key:
         print("ZHIPUAI_API_KEY missing from environment", file=sys.stderr)
         return 1
-    client = ZhipuAI(api_key=api_key, timeout=PER_REQUEST_TIMEOUT)
+    # Direct Zhipu connection: ignore HTTP_PROXY/HTTPS_PROXY/ALL_PROXY from shell/VPN env.
+    http_client = httpx.Client(timeout=PER_REQUEST_TIMEOUT, trust_env=False)
+    client = ZhipuAI(api_key=api_key, timeout=PER_REQUEST_TIMEOUT, http_client=http_client)
 
     scores = pd.read_parquet(REPO / "data/audit/scores.parquet")
     treatments = pd.read_parquet(REPO / "data/processed/treatment_assignments.parquet")
